@@ -1,0 +1,74 @@
+\documentclass[10pt,a4paper, nocenter]{report}
+\usepackage[scaled=0.92]{helvet}
+\usepackage[margin=1in]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage{blindtext}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+\makeatletter
+\patchcmd{\chapter}{\@maketitle\cleardoublepage}{}{}{}
+\makeatother
+
+\pagestyle{fancy}
+\lhead{Report on Paper "A tutorial on spectral clustering" \\by Ulrike von Luxburg}
+\rhead{Sourabh Antani}
+\cfoot{\thepage\ of \pageref{LastPage}}
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+\author{Sourabh Antani}
+\title{Report on Paper "A tutorial on spectral clustering" \\by Ulrike von Luxburg}
+\date{}
+
+\begin{document}
+	\maketitle
+	\chapter*{Introduction}
+	\thispagestyle{fancy}
+	This tutorial is setup up as self-contained introduction to spectral clustering. It derives spectral clustering from scratch and present different points of view to why spectral clustering works. 
+	
+	\chapter*{Similarity graphs}
+	\thispagestyle{fancy}
+		Given a set of data points $x_{1},\dots,x_{n}$ and some notion of similarity $s_{ij}\ge 0$ getween all pairs of data points $x_{i}$ and $x_{j}$, the intuitive goal of clustering is to divide the data points into several groups such that the points in the same group are similar and the points in different groups are dissimilar to each other. A nice way of representing the data is in form of \textit{similarity graph} $G=(V,E)$. Each vertex $v_{i}$in this graph represents a data point $x_{i}$. Two vertices are connected if the similarity $s_{ij}$ between the corresponding data points $x_{i}$ and $x_{j}$ is positive or larger than a certain threshold and the edge is weighted by $s_{ij}$. The problem of clustering can now be reformulated using the similarity graph: we want to find the partition of the graph such that the edges between different groups have very low weights (which points to dissimilarity) and the edges within the group have high weights (hence similar). 
+		\\
+		\textbf{Some Terminology:}
+		\begin{description}
+			\item[$G=(V,E)$] undirected graph
+			\item[$V=\{v_{1},\dots,v_{n}\}$] vertex set
+			\item[$E$] set of weighted edges  such that each edge between two vertices $v_{i}$ and $v_{j}$ carries a non-negative weight $w_{ij} \ge 0$. 
+			\item[Weighted \textit{adjacency matrix}] of the graph is matrix $W-(w_{ij})_{i,j=1,\dots,n}$. If $w_{ij}=0$, vertices $v_{i}$ and $v_{j}$ are not connected. 
+			\item[$w_{ij}=w_{ji}$] since $G$ is undirected. 
+			\item[The degree of a vertex $v_{i}\in V$] is defined as $ d_{i} = \sum_{j=1}^{n}w_{ij}$. 
+			\item[\textit{degree matrix} $D$] is defined as the diagonal matrix with the degrees $d_{1} ,\dots, d_{n}$ on the diagonal. 
+			\item[$\bar{A}$] Complement $V \backslash A$  of a given subset $A \subset C$.
+			\item[Indicator vector $\mathbb{1}_{A}$] vector with entries $f_{i} = 1$ if $v_{i}=A$, $f_{i}=0$ otherwise.
+			\item[$W(A,B) = \sum_{i\in A, j\in B}w_{ij}$], for non-necessarily disjoint sets. 
+			\item[$\lvert A \rvert$] = number fo vertices in $A$ = size of set $A$
+			\item[$vol(A)$]  = $\sum_{i\in A}d_{i}$
+			\item[Connected] subset $A \subset V$ of a graph is connected of any two vertices in $A$ can be joined by a path such that all intermediate points also line in $A$.
+			\item[Connected Component] Connected subset such that $A$ and $\bar{A}$ are disjoint
+			\item[Partition] non-empty sets $A_{1},\dots,A_{k}$ form partition of graph inf $A_{i} \cap A_{j} = \emptyset$ and $A_{1}\cup \dots \cup A_{k} = V$
+		\end{description}	
+	
+		\textbf{Different similarity graphs}
+		\begin{description}
+			\item[$\epsilon$-neighbourhood graph] Connect points whose pairwise distances are less than $\epsilon$. Weight data is not incorportated into the graph. 
+			\item[k-nearest neighbor graphs] Connect the nearest $k$ points. Usually directed since $v_{i}$ being in the \textit{k nearest neighbors} of $v_{j}$ does not mean that $v_{j}$ is in \textit{k nearest neighbors} of $v_(i)$
+		\end{description}
+	\thispagestyle{fancy}
+	\begin{thebibliography}{9}
+	\thispagestyle{fancy}
+		\bibitem{gene_cheung} 
+		Cheung, Gene, Magli, Enrico, Tanaka, Yuichi, Ng, Michael K. "Graph Spectral Image Processing". Proceedings of the IEEE, vol 106, No. 5, pp. 907-930 May 2018
+
+	\end{thebibliography}
+\end{document}

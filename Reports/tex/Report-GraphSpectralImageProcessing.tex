@@ -1,0 +1,164 @@
+\documentclass[10pt,a4paper, nocenter]{report}
+\usepackage[scaled=0.92]{helvet}
+\usepackage[margin=1in]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage{blindtext}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+\makeatletter
+\patchcmd{\chapter}{\@maketitle\cleardoublepage}{}{}{}
+\makeatother
+
+\pagestyle{fancy}
+\lhead{Report on Paper "Graph Spectral Image Processing" \\by Gene Cheung et al.}
+\rhead{Sourabh Antani}
+\cfoot{\thepage\ of \pageref{LastPage}}
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+\author{Sourabh Antani}
+\title{Report on Paper "Graph Spectral Image Processing" \\by Gene Cheung et al.}
+\date{}
+
+\begin{document}
+	\maketitle
+	\chapter*{Introduction}
+	\thispagestyle{fancy}
+	This paper provides an overview of recent graph spectral techniques in GSP specifically for image/video processing. The topics covered include image compression, image restoration, image filtering, and image segmentation.
+	
+	\chapter*{Definitions and Basics}
+	\thispagestyle{fancy}
+	\begin{description}
+	\item[Graph] A graph $\mathcal{G}(\mathcal{V},\mathcal{E},\mathbf{W})$ contains a set $\mathcal{V}$ of $N$ nodes and a set $\mathcal{E}$ of $M$ edges. Each existing edge $(i,j) \in \mathcal{E}$ is undirected and contains an edge weight $w_{i,j}$, which is typically positive; a large positive $w_{i,j}$ would mean that samples at nodes $i$ and $j$ are expected to be similar/correlated.
+	
+	\item[Graph Signal] $x$ on $\mathcal{G}$ is a discrete signal of dimension $N$, one sample $x_{i}\in \mathbb{R}$ for each node $i$ in $\mathcal{V}$. Assuming nodes are appropriately labeled from $1$ to $N$, we can treat a graph signal simply as a vector $x \in \mathbb{R}^{N}$.
+	
+	\item[Edge weight Matrix $\mathbf{W}$] $W_{i,j}=w_{i,j}$, has $0$ on diagonal unless graph contains self loops, i.e. an edge from a node to iteslf.
+	
+	\item[Diagonal Degree Matrix $\mathbf{D}$] $d_{i,j}$ = $\sum_{i}W_{i,j}$.
+	
+	\item[Combinatorial Graph Laplacian $\mathbf{L}$] = $\mathbf{D}-\mathbf{W}$. $\mathbf{L}$ is symmetric, and PSD if all weights are positive, and hence, can be decomposed into $\mathbf{L}=\mathbf{U}\Lambda\mathbf{U}^{T}$ where $\Lambda$ is a diagonal matrix containing real (and non-negative for PSD) eigenvalues $\lambda_{k}$. $\mathbf{U}$ is the eigenmatrix composed of orthogonal eigenvectors $\mathbf{u}_{i}$ as columns. the eigenvalues and eigenvectors here can be interpreted as \textbf{graph frequencies} and \textbf{graph frequency components} respectively. Together, they define \textbf{graph spectrum} for graph $\mathcal{G}$. $\mathbf{U}$ can be used to decompose a graph signal $x$ into its frequency components $\alpha = \mathbf{U}^{T}x$.
+	
+	\textit{???WHY D-W? Why not D+W???}
+	
+	\item [Smooth Signal] A signal $\mathbf{x}$ is considered smooth if the if the sample on a node $x_{i}$ is similar to the samples $x_{j}$ on neighboring nodes with large $w_{i,j}$. In frequency domain, this means that graph has mostly low frequency compnents and the coefficients $\alpha = \mathbf{U}^{T}x$ are zero for high frequency components. The smoothest signal is a constant vector and is the first eigen vecor corresponding to the eigen value 0. Expressing $\mathbf{x}$ as $x_{i}-x_{j}$, smooth signal would mean that when the frequency (= eigen value $\lambda$)is high, the signal would be similar ($x_{i}-x_{j}$ is small). Hence the graph regularizer $\mathbf{x^{T}Lx}$ is small and since $\mathbf{L}$ is PSD, it is lower bounded by 0 which is achieved when $\mathbf{x}$ is scalar multiple of the constant eigen vector.
+	$$ \mathbf{x^{T}Lx} = \sum_{(i,j)\in \mathcal{E}}w_{i,j}(x_{i}-x_{j})^2 = \sum_{k}\lambda_{k}\alpha_{k}^2 $$
+	
+	If $\mathbf{W}$ is interpreted as shift operator, the smoothness can be defined as the $p$-norm of the difference between the signal and its shifted version i.e. $\lvert\lvert \mathbf{x}-\frac{1}{\lvert \lambda_{max}\rvert}
+	\mathbf{Wx}\rvert\rvert_{p}^p$
+	\end{description}
+	
+	\chapter*{Image Compression}
+	\thispagestyle{fancy}
+	Image compression refers to the process of encoding an image $\mathbf{x}$ onto a codeword $c(\mathbf)$, minimizing distortion in the reconstructed image for a given target bit-rate $R(t)$. Traditionally, this is done using lossy compression via 2-D transform that generates a vector of transform coefficient whose components are mostly small with only a few significantly different from 0. 
+
+	There are many versions of a scheme where the coefficients $\alpha$ are quantized and loosely coded using compression algorithm. However the decoding requires the knowledge of transform used for encoding. Due to this, either a pre-determined transform must be used or the information about transform has to be supplied in addition to the compressed data, thus adding to the bit-rate. 
+	
+	Seeking optimal transform is an open research area. Discrete Cosine Transform (DCT) and wavelets use fixed set of basis vectors so these dont need to be communicated to decoder. 
+	
+	\textbf{Karhunen-Lo\`{e}ve transform (KLT)} is based on eigendecomposition of covariance matrix (similar to Pinciple Component Analysis). It has been shown to be optimal for a Gaussian source under mean square error metric. KLT is signal-adaptive since the columns of \textbf{U} (basis vectors) can be matched to a class of input signal. The drawbacks are: the transform matrix has to be communicated to decoder, the transform does not have a specific structure, hence a fast algorithm cannot be applied.
+	
+	\textbf{GFT} is also based on eigen vector decomposition but is more flexible by encoding pixel similarities into weights of an undirected graph. This enables use of GFT on any types of image and also one can decide the degree of accuracy of encoded image. Graph Laplacian is also PSD which enables use of fast algorithms.  Additionally ommonly occuring transforms can ben indexed which would require only the index information to be transmitted, thus reducing the overhead. 
+	
+	\textbf{Graph Design} is the process of choosing the graph topology and edge weights that make up the matrices use for GFT. Edge weight is conventionally computed as a function of photometric distance (difference in pixel values, in color components). However this can become very expensive. One scheme to reduce the overhead is to constrain the weights to ${0,1}$ to simply encode if pixels are similar or not, or by using greedy optimization on edge detection or image segmentation algorithms. Yet another approach would be to segment the image into blocks and use quantizer optimized using probability density function and encode the blocks where the 'similarity' distribution is extreme (either strong or none) using weights of ${0,1}$ and using ${1,c}$ where the similarity distribution is strong or weak.
+	
+	\textbf{Graph Learning} is process of defining a 'good graph' from data. Many methods are referenced but none described by the authors. \textit{Need to review few references to understand}.
+	
+	\textbf{Reducing GFT Complexity} some of the approaches are using index for commonly used transforms (this works for small block sizes), apply GFT to low-resolution images and ue edge-adaptive filter to restore original resolution and exploiting graph symmetries where possible.
+	
+	\textbf{Directional Model} is another popular way to reduce the complexity and overhead. The idea is to treat DCT as 2D square grid graph. In this case the eigen values are not distinct. In this case, the eigen bases for the Laplacian can be represented as rotation of the original vector. The angle of rotation must be chosen to match the directional characteristics of the image block. In this way, the angle encodes a large amount of detail in the image, thus reducing the overhead.
+
+	\textbf{Applications} of GFT range from video compression, inter- and intra-predicted video coding, multivideo view etc.
+	
+	\chapter*{Image Restoration}
+	\thispagestyle{fancy}
+	Image restoration is an inverse problem. Given a degraded image, one is tasked with restoring the original signal, e.g. denoising, interpolation, super-resolution, deblurring etc. A generic model can be viewed as $\mathbf{y}=\mathbf{Hx} + \mathbf{z}$ where $\mathbf{y}$ is degraded observation of the original $\mathbf{x}$, $\mathbf{H}$ is the degradation matrix and $\mathbf{z}$ is additive noise.
+	
+	\textbf{Image Denoising}: \textbf{H}=\textbf{I}, \textbf{z} is additive white Gaussian noise. Using Bayesian approach, a typical maximum \textit{a posteriori} formulation as $$\min_{x} \lvert\lvert y-x \rvert\rvert_{2}^{2} + \mu R(x)$$ where $R(x)$ is the negative log of signal prior or regularization term and $\mu$ is the weight parameter. The crux is to define a prior $R(x)$ that discriminates target signal against other candidates while keeping optimization computationally efficient. 
+	
+	Alternately, denoising can be viewed as filtering problem $$x=D^{-1}Wy $$ where $D^{-1}W$ is row stochastic and filter coefficients in \textbf{W} are designated adaptively based on local/nonlocal statistics. 
+	
+	\begin{description}
+		\item [Sparsity of GFT Coefficients]: One approach is to map an observed signal to a preselected transform domain assuming parse signal representation and perform hard/soft thresholding on transform coefficients. Probabilistically, graph Laplacian can be interpreted as inverse covariance matrix of GMRF and hence de-correlates the input signal. Thus, appropriately chosen GFT can sparsify an signal resulting in smaller $l_{0}$-norm. Assuming self-similarity, average patch $\bar{y}$ is computed using $N-1$ similar patches to a target patch $y$. For each pixel, the weight $w_{i,j}$ for each of the edges connecting to neighboring pixels is calculated using photometric distance. it can be shown that the computed eigenvectors for the image are robust to noise. The $N$ similar patches are denoised jointly as:
+		$$ \min_{\alpha} \sum_{i=1}^{N} \lvert\lvert y_{i}-U\alpha_{i} \rvert\rvert_{2}^{2} + \tau \sum_{i=1}^{N} \lvert\lvert \alpha_{i} \rvert\rvert_{0}$$ where the weight parameter $\tau$ can be estimated using Stein unbiased risk estimator. The second term can be minimized using iterative soft-thresholding.
+		
+		\item[Graph Laplacian Regularizer]: $R(x)=x^{T}Lx$. This can also be interpreted as Tikhonov regularizer $\lvert \lvert \Gamma x \rvert\rvert_{2}^{2}$ where $\Gamma = U \Lambda ^{1/2} U^{T}$ given $L=U\Lambda U^{T}$. Minimizing the regularizer means that the connected pairs by large edge weights will have similar sample values, i.e. energy of the signal resides mostly on low frequencies. The optimal solution $x^{*}$ is calculated as $$ x^{*} = U diag\bigg(\frac{1}{(1+\mu\lambda_{1})}, \dots, \frac{1}{(1+\mu\lambda_{N})}\bigg)U^{T}y. $$ The resulting low-pass filter on $y$ in GFT domain - smaller filter coefficient $(1+\mu \lambda_{i})^{-1}$ for larger $\lambda_{i}$ - can be implemented efficiently using Chebychev polynomial approximation.
+		
+		Alternatively, assuming that the Hermitian of the weight matrix $\mathbf{W}^{*}$is a polynomial of the matrix $\mathbf{W}$, the optimal MAP denoising filter with $l_{2}$-norm is derived without matrix inversion as $g(\lambda_{n}) = \frac{1}{1+\mu(1-\lambda_{n})^{2}}$
+		
+		Also, the Laplacian regularizer can be interpreted from a continuous manifold perspective where weights are computed as gaussian of different in set of exemplar functions $f()$. The regularizer converges to a continuous functional $\int_{\Omega}\nabla x^{T}G^{-1}\nabla x(\sqrt{det(G)})^{2\gamma -1}ds$ where $G=\sum_{n=1}^{N}\nabla f_{n} \nabla f_{n}^{T}$. Defining $D = G^{-1}(\sqrt{det(G)})^{2\gamma -1}$, the optimization can be implemented as aniostropic diffusion $\delta_{t}x=div(D\nabla x^{*})$. $D$ is the diffusity that determines how fast the image is diffused. For $\gamma <1$, it can be shown that diffusion is two step process 1) forward diffusion smooths an image along edge and 2) backward diffusion that sharpens perpendicular to the edge. 
+		
+		In Low-dimension manifold model, the graph is interpretated as patches of d-pixels lying on a d-dimension space lying on a low dimension manifold. This can be iteratively solved using weighted graph Laplacian method . 
+		
+		\item [Graph Total Variation] can optimized using local gradients $\nabla_{i}x \in \mathbb{R}^{N}$ as $(\nabla_{i}x)_{j} = (x_{j}-x_{i})W_{i,j}$. Here, the isotropic total variation is defined as $\sum_{i \in \mathcal{v}}\lvert \lvert \nabla_{i}x \rvert \rvert _{2}$. The TV-norm (defined above) is convex but non-smooth. Hence there are specialized algorithms to minimize it with fidality term  such as proximal gradient algorithms.
+		
+		\item [Weiner Filter] approaches the denoising problem from statistical point of view and minimizes the mean square error. This method also works on non-gaussian noise.
+		
+		\item [Image Deblurring]: \textbf{H} is the blurring operator, which may or may not be known. 
+		
+		One approach is to generated a stochastic matrix by row and column pre and post multiplying \textbf{W} by a diagonal matrix $K=C^{-1/2}WKC^{-1/2}$ so that  $I-K$ is symmetric positive semi-definite. This is then used in a minimization problem to deblur the image. 
+		
+		
+		\item [Soft decoding of JPEG imeages] JPEG image encoding is done by transforming $8\times 8$ block via DCT followed by quantizing the coefficients ($q_{i}=round(Y_{i}/Q_{i})$) before entropy encoding them. Hence at decoding time, one must find the quantization parameter. This can be done using a random walk graph Laplacian The iterative graph laplacian promotes PWS and restores the high fequencies of the image recreating the image. For patch restoration, it is desirable to apply the same filtering strength for all the patches. $x^T\mathbf{L}_{r}^T\mathbf{L}_{r}x$ as regularized random walk graph laplacian. 
+	\end{description}
+	
+	\chapter*{Graph Based Image Filtering}f
+	\thispagestyle{fancy}
+	
+	\begin{description}
+		\item[Smooting and Diffusion] A simple approach to smooting is to determine edge weights as euclidian distances and use low-pass filtering to give binary weights to the edges. This method works well but becomes difficult as number of vertices grows. Another approach is to interpret the weights as a heat map and then the solution is given by diffusion equation. 
+		
+		\item[Edge-Preserving Smoothing] The bilateral filter can be considered as a graph filter as follows:
+		$$ \hat{x} = D^(-1)Wx = D^{-1/2}U_{n}(I-\Lambda_{n}U_{n}^{T}D^{1/2}x) $$
+		With eigenvalues between 0 and 2, the bilateral filter implicitly designs the GFT basis and Graph spectral filter. For example the filter $$ \tilde{h}(\lambda) = \frac{1}{1+\rho \tilde{h}_{r}(\lambda)} $$ is a low pass filter if $\tilde{h}_{r}(\lambda)$ is a high pass filter and is an optimum solution of $\underset{x}{arg min}\lvert \lvert y-x\rvert\rvert _{2}^2+\rho \lvert \lvert H_{r}x\rvert \rvert _{2}^2$
+		
+		\item[Domain transform] is performed in 4 steps. 1) compute the pixels as geometric, photometric or combination in each color channel. 2) place the value of he node on the node positions. 3) Perform a low pass filter 
+		4) replace the filtered signal back on the pixels
+		
+		The deformed pixel position after the domain transform can be viewed as solution to a linear problem. Then the original image recovery amounts to finding the inverse of the linear operator (matrix)
+		
+		\item [Computation] Modern image processing requires very large graph Laplacians. E.g. 4K image contains $8\times 10^6$ pixels and the laplacian has to be square of that number. Hence for speed, the initial eigen values are partially calculated or approximated. 
+		
+		Alternately, the spectral response can be representated as a polynomial in $\lambda$. These polynomial can be approximated usign chebyshev or other methods. 
+		
+		\chapter*{Image Segmentation}
+		\thispagestyle{fancy}
+		Image segmentation is used for computer vision and also for some of the methods discusses above. The segmentation methods basically are energy-based methods that optimize the energy upon segmentation.
+		
+		\textbf{Graph Cut} is partitioning of vertices into disjoint and connected sets. The cost of the cut is the sum of weights of the edges that are severed to make the cut.
+		
+		\begin{description}
+			\item[Max-Flow and Min-Cut]: Min-cut is a cut that has the lowest cost.The max-flow/min0cut solution can be found using max-flow algorithm but faster iterative methods are also available. 
+			
+			\item[Normalized Cuts]: Min-cut tends to give regions with very few vertices. In order to avoid this, Normalized cut is used. Here the cost is considered to be the fraction of edge weights that are severed to the total edge weight of all edge going from a segment to all vertices in teh graph. This becomes an eigen-decomposition problem on Normalized Laplacian matrix. The eigen vector corresponding to second smallest eigen value provides a normalized cut. The one for third smallest eigen value gives the provides the partition of the first two regions.
+			
+			
+			\item[Mumford-Shah model] is a segmentation model to minimize the functional: $$ J(u, \Gamma_{i})_{i=1}^n = \int_{\Omega}(u-f)^2 dx + \beta \int_{\Omega}\Gamma_{1}\lvert \nabla u \rvert ^2dx + v\sum_{i=1}^{n}\int_{\Gamma_{1}}ds$$ $\Gamma$ are the interphases. 
+			
+			The graph cut can be achieved in a minimum sense or Discrete sense and algorithms for each type exist. 
+			
+			This image segmentation technique can also be applied to classification and multi-labeling problem. 
+			
+			\item[Graph Bi-Laplacian] is the second order graph-laplacian. For example, when a pixel is connected to four neighbors with equal weight, it represents finite element methods. 
+		\end{description}
+		
+	\end{description}
+	
+	\thispagestyle{fancy}
+	\begin{thebibliography}{9}
+	\thispagestyle{fancy}
+		\bibitem{gene_cheung} 
+		Cheung, Gene, Magli, Enrico, Tanaka, Yuichi, Ng, Michael K. "Graph Spectral Image Processing". Proceedings of the IEEE, vol 106, No. 5, pp. 907-930 May 2018
+
+	\end{thebibliography}
+\end{document}
