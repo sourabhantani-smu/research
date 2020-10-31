@@ -19,28 +19,33 @@
 \patchcmd{\chapter}{\@maketitle\cleardoublepage}{}{}{}
 \makeatother
 
+\newtheorem{prop}{Proposition}
+\newcommand{\abs}[1]{\lvert {#1} \rvert}
+\newcommand{\norm}[1]{\lvert\lvert {#1} \rvert\rvert}
+
+
 \pagestyle{fancy}
-\lhead{Report on Paper "A tutorial on spectral clustering" \\by Ulrike von Luxburg}
+\lhead{[WORK IN PROGRESS] \\ Report on Paper "A tutorial on spectral clustering" \\by Ulrike von Luxburg}
 \rhead{Sourabh Antani}
 \cfoot{\thepage\ of \pageref{LastPage}}
 \renewcommand{\footrulewidth}{0.4pt}
 
 
 \author{Sourabh Antani}
-\title{Report on Paper "A tutorial on spectral clustering" \\by Ulrike von Luxburg}
+\title{[WORK IN PROGRESS] \\ Report on Paper "A tutorial on spectral clustering" \\by Ulrike von Luxburg}
 \date{}
 
 \begin{document}
 	\maketitle
-	\chapter*{Introduction}
+	\chapter{Introduction}
 	\thispagestyle{fancy}
 	This tutorial is setup up as self-contained introduction to spectral clustering. It derives spectral clustering from scratch and present different points of view to why spectral clustering works. 
 	
-	\chapter*{Similarity graphs}
+	\chapter{Similarity graphs}
 	\thispagestyle{fancy}
 		Given a set of data points $x_{1},\dots,x_{n}$ and some notion of similarity $s_{ij}\ge 0$ getween all pairs of data points $x_{i}$ and $x_{j}$, the intuitive goal of clustering is to divide the data points into several groups such that the points in the same group are similar and the points in different groups are dissimilar to each other. A nice way of representing the data is in form of \textit{similarity graph} $G=(V,E)$. Each vertex $v_{i}$in this graph represents a data point $x_{i}$. Two vertices are connected if the similarity $s_{ij}$ between the corresponding data points $x_{i}$ and $x_{j}$ is positive or larger than a certain threshold and the edge is weighted by $s_{ij}$. The problem of clustering can now be reformulated using the similarity graph: we want to find the partition of the graph such that the edges between different groups have very low weights (which points to dissimilarity) and the edges within the group have high weights (hence similar). 
 		\\
-		\textbf{Some Terminology:}
+		\section{Some Terminology:}
 		\begin{description}
 			\item[$G=(V,E)$] undirected graph
 			\item[$V=\{v_{1},\dots,v_{n}\}$] vertex set
@@ -50,7 +55,7 @@
 			\item[The degree of a vertex $v_{i}\in V$] is defined as $ d_{i} = \sum_{j=1}^{n}w_{ij}$. 
 			\item[\textit{degree matrix} $D$] is defined as the diagonal matrix with the degrees $d_{1} ,\dots, d_{n}$ on the diagonal. 
 			\item[$\bar{A}$] Complement $V \backslash A$  of a given subset $A \subset C$.
-			\item[Indicator vector $\mathbb{1}_{A}$] vector with entries $f_{i} = 1$ if $v_{i}=A$, $f_{i}=0$ otherwise.
+			\item[Indicator vector $\mathbf{1}_{A}$] vector with entries $f_{i} = 1$ if $v_{i}=A$, $f_{i}=0$ otherwise.
 			\item[$W(A,B) = \sum_{i\in A, j\in B}w_{ij}$], for non-necessarily disjoint sets. 
 			\item[$\lvert A \rvert$] = number fo vertices in $A$ = size of set $A$
 			\item[$vol(A)$]  = $\sum_{i\in A}d_{i}$
@@ -59,16 +64,200 @@
 			\item[Partition] non-empty sets $A_{1},\dots,A_{k}$ form partition of graph inf $A_{i} \cap A_{j} = \emptyset$ and $A_{1}\cup \dots \cup A_{k} = V$
 		\end{description}	
 	
-		\textbf{Different similarity graphs}
+		\section{Different similarity graphs}
 		\begin{description}
 			\item[$\epsilon$-neighbourhood graph] Connect points whose pairwise distances are less than $\epsilon$. Weight data is not incorportated into the graph. 
 			\item[k-nearest neighbor graphs] Connect the nearest $k$ points. Usually directed since $v_{i}$ being in the \textit{k nearest neighbors} of $v_{j}$ does not mean that $v_{j}$ is in \textit{k nearest neighbors} of $v_(i)$
+			\item[Fully connected graph] is a graph where all points with positive similarity with each other are connected. The edges here are weighted by $s_{ij}$. This type of construction is only useful when the similarity function models local neighborhoods since a graph should represent local neighborhood relationships. 
 		\end{description}
+	
+		\chapter{Graph Laplacians and their basic properties}
+		\textbf{Assumptions:} $G$ is an undirected, weighted graph with weight matrix $W$, where $w_{ij} = w_{ji} \ge 0$. Eigenvectors are not normalized and multiples of an eigenvector are considered to be equivalent. Eigenvalues are always ordered increasingly, respecting multiplicities. So 'the first $k$ eigenvectors' will refer to eigenvectors corresponding to the $k$ smallest eigenvalues.
+		\\ \\
+		\section{Unnormalized graph Laplacian: $L=D-W$}
+			\begin{prop}(Properties of L) The matrix L satisfies:
+				\begin{enumerate}
+					\item for every vector $f \in \mathbb{R}^{n}$ we have $$ f_{T}Lf = \frac{1}{2}\sum_{i,j=1}^{n} w_{ij}(f_{i}-f_{j})^{2} $$
+					\item L is symmetric and positive semi-definite
+					\item The smallest eigenvalue of L is 0, the corresponding eigenvector is the constant vector $\mathbf{1}$
+					\item L has $n$ non-negative, real-values eigenvalues $0=\lambda_{1} \le \lambda_{2} \le \cdots \le \lambda_{n}$
+				\end{enumerate}
+			\end{prop}
+			\textit{Proof:}
+			\begin{enumerate}
+				\item  By definition of $d_{j} = \sum_{i=1}^{n}w_{ij}$
+				\begin{align*}
+				f'Lf & = f'Df - f'Wf = \sum_{i=1}^{n}d_{i}f_{i}^{2} -  \sum_{i,j=1}^{n}f_{i}f_{j}w_{ij}\\
+				& = \frac{1}{2}\bigg(\sum_{i=1}^{n}d_{i}f_{i}^{2} -  2\sum_{i,j=1}^{n}f_{i}f_{j}w_{ij} + \sum_{i=j}^{n}d_{j}f_{j}^{2}\bigg)\\
+				& = \frac{1}{2}\sum_{i,j=1}^{n}w_{ij}(f_{i}-f_{j})^{2}
+				\end{align*}
+				\item Since $W$ and $D$ are symmetric $L = D-W$ is still symmetric. By result of part (a), since $w_{ij} \ge 0$ and $(f_{i}-f_{j})^{2} \ge 0$, $f'Lf \ge 0$, hence $L$ is symmetric and positive semi-definite
+				\item See proposition 2
+				\item Since $L$ is symmetric, all its eigenvalues are real. Also by part (c), the smallest eigenvalue is 0, 
+			\end{enumerate}
+		
+			Note that the unnormalized graph Laplacian does not depend on the diagonal elements of $W$. $d_{ii} = \sum_{j=1}^{n}w_{ij}$, hence the diagonal elements are cancelled by $d_{ii}$ and the self-edges do not change the Laplacian. \\
+			
+			\begin{prop}
+				(Number of connected components and the spectrum of $L$) Let $G$ be an undirected graph with non-negative weights. Then the multiplicity $k$ of the engenvalue $0$ of $L$ equals the number of connected components $A_{1},\cdots,A_{k}$ in the graph. The eigenspace of eigenvalue $0$ is spanned by the indicator vectors $\mathbf{1}_{A_{1}},\cdots,\mathbf{1}_{A_{k}}$ of those components.				
+			\end{prop}
+			\textit{Proof:}
+			Starting with $k=1$, i.e. graph is fully connected. Assume that $f$ is the eigenvector with eigenvalue $0$. Then,
+			$$ 0 = f'Lf = \sum_{i,j=1}^{n}w_{ij}(f_{i}-f_{j})^{2} \implies f_{i} - f_{j}=0 \hspace{10pt}[\because w_{ij} > 0]$$
+			
+			Since we assumed a fully connected graph, $f$ has to be constant for the above argument to be true for any vertex in the connected component. Hence the vector $\textbf{1}$, which is the indicator vector of the component is an eigenvector corresponding to eigenvalue $0$. 
+			
+			Now, for $k>1$, we can easily rearrange the vertices in the matrix to put all the vertices of a connected component together. This would cause the matrix $L$ to be a block diagonal matrix. For each of these blocks, or components, the respective indicator vector is an eigenvector with eigenvalue 0. Thus the Matrix $L$ has eigenvalue $0$ with multiplicity equal to the number of components and the corresponding eigenvectors would be the indicator vectors of those components. 
+			$ $\\
+			
+			
+			\section{Normalized Graph Laplacians}
+			There are two normalized graph Laplacians found in literature:
+			\begin{enumerate}
+				\item{Symmetric Laplacian:} $L_{sym} = D^{-1/2}LD^{-1/2} = I - D^{-1/2}WD^{-1/2}$\\
+					This can be derived simply by decomposing the diagonal matrix $D$ into $D^{1/2}D^{1/2}$ and then left and right multiplying the equation $L=D-W = D^{1/2}D^{1/2}-W$ by $D^{-1/2}$
+				\item{Random walk Laplacian:} $L_{rw} = D^{-1}L = I-D^{-1}W$\\
+					This can be derived by left multiplying $L=D-W$ by $D^{-1}$
+			\end{enumerate}
+
+			\begin{prop}
+				(Properties of $L_{sym}$ and $L_{rw}$)
+				\begin{enumerate}
+					\item
+					For every $f\in\mathbb{R}^{n}$
+					$$ f'L_{sym}f = \frac{1}{2}\sum_{i,j=1}^{n}w_{ij}\bigg(\frac{f_{i}}{\sqrt{d_{i}}}-\frac{f_{j}}{\sqrt{d_{j}}}\bigg)^{2} $$
+					\item $\lambda$ is an eigenvalue of $L_{rw}$ with eigenvector $u$ iff $\lambda$ is an eigenvalue of $L_{sym}$ with eigenvector $w=D^{1/2}u$.
+					\item $\lambda$ is an eigenvalue of $L_{rw}$ with eigenvector $u$ iff $\lambda$ and $u$ solve the generalized eigenproblem $Lu=\lambda Du$
+					\item $0$ is an eigenvalue of $L_{rw}$ with the constant one vector $\mathbf{1}$ as eigenvector. $0$ is an eigenvalue of $L_{sym}$ with eigenvector $D^{1/2}\mathbf{1}$
+					\item $L_{sym}$ and $L_{rw}$ are positive semi-definite and have $n$ non-negative real-valued eigenvalues $0=\lambda_{1} \le \lambda_{2} \le \cdots \le \lambda_{n}$
+				\end{enumerate}
+			\end{prop}
+			\textit{Proof:}
+			\begin{enumerate}
+				\item This can be proved similar to part 1 of proposition 1. 
+				\item Assume $\lambda$ is an eigenvalue of $L_{sym}$ with eigenvector $w=D^{1/2}u$. 
+				\begin{align*}
+				L_{sym}D^{1/2}u &= \lambda D^{1/2}u \\
+				\implies  D^{-1/2}LD^{-1/2}D^{1/2}u &= \lambda D^{1/2}u \\
+				\implies D^{-1}Lu &= \lambda u \hspace{10pt}[\text{left multiplying with } D^{-1/2}] \\
+				\implies L_{rw}u &= \lambda u
+				\end{align*}
+				In otherwords, u is eigenvector of $L_{rw}$. To prove the other direction, apply the above steps in reverse order.
+				\item This can be proven in similar manner to above by left multiplying the generalized eigenproblem $Lu = \lambda Du$ with $D^{-1}$
+				\item $L_{rw}\mathbf{1} = (I-D^{-1}W)\mathbf{1} = \mathbf{1}-\mathbf{1} = 0$.\\ The above is true because $d_{i} = \sum_{j=1}^{n}wij \implies \big(D^{-1}W)\mathbf{1}\big)_{i} = \sum_{j=1}^{n}\frac{w_{ij}}{d_{i}}$, since $\mathbf{1}$ is the indicator vector. Then using part (b) leads to the second statement of this property. 
+				\item The first part (for $L_{sum}$) can be proved from part (a), similar to Proposition 1. Part 2 essentially states that $L_{sym}$ and $L_{rw}$ have the same eigenvalues, hence second statement is also proven.
+			\end{enumerate}					
+		
+			\begin{prop}
+				(Number of connected components and spectra of $L_{sym}$ and $L_{rw}$) Let $G$ be an undirected graph with non-negative weights. Then the multiplicity $k$ of the eigenvalue $0$ of both $L_{sym}$ and $L_{rw}$ equals to the number of connected components $A_{1},\cdots,A_{k}$ in the graph. for $L_{rw}$, the eigenspace of $0$ is spanned by the indicator vectors $\mathbf{1_{A_{i}}}$ of these components. for $L_{sym}$ the eigenspace of $0$ is spanned by $D^{1/2}\mathbf{1_{A_{i}}}$
+			\end{prop}
+			\textit{Proof:} The proof of this is analogous to that of proposition 2, but using proposition 3.
+
+	
+	\chapter{Spectral clustering algorithms}
+	This chapter lists 3 classic algorithms, one for unnormalized and two for normalized spectral clustering. These have been implemented in python notebooks on the git repository and are excluded here.
+	
+	
+	\chapter{Graph cut point of view}
+	The intuition of clustering is to separate points into groups so that the edges between groups have low weight. Thus the clustering can be viewed as mincut problem.
+	
+	Recall the notation $W(A,B) = \sum_{i\in A, j\in B} w_{ij}$ and $\bar{A}$ for compement of $A$. Thus choosing the $k$ partitions $A_{1},\dots,A_{k}$ is to minimize $$ cut(A_{1},\dots,A_{k}) = \frac{1}{2}\sum_{i=1}^{k}W(A_{i},\bar{A}_{i}) $$ 
+	The factor 1/2 is for notational consistency, otherwise the edges in the cut will be counted twice, once from $A$ to $\bar{A}$ and then from $\bar{A}$ to $A$. The problem is that in many cases this separates in to 'unbalanced' clusters where some clusters have only one (or very few) nodes while others are fairly large. One way to circumvent is to explicitly request that the sets $A_{1},\dots,A_{k}$ are 'reasonably large'. Two common approaches are RatioCut (Hagen \& Kahng, 1992) where the size of $A_{i}$ is measured by the number of vertices $\lvert A \rvert$ and Normalized cut, or Ncut, (Shi \& Malid 2000) where the size $A_{i}$ is measured by sum of weights of its edges $vol(A)$. The definitions are	
+	\begin{align*}
+		RatioCut(A_{1},\dots,A_{k}) &= \frac{1}{2} \sum_{i=1}^{k}\frac{W(A_{i},\bar{A}_{i})}{\lvert A_{i} \rvert}
+		= \sum_{i=1}^{k}\frac{cut(A_{i},\bar{A}_{i})}{\lvert A_{i} \rvert} \\
+		Ncut(A_{1},\dots,A_{k}) &= \frac{1}{2}\sum_{i=1}^{k}\frac{W(A_{i},\bar{A}_{i})}{vol(A_{i})} = 
+		\sum_{i=1}^{k}\frac{cut(A_{i},\bar{A}_{i})}{vol(A_{i})}
+	\end{align*}
+	Note that in both cases, the objective functions take the minimum value if the 'measures' (number of vertices or sum of weights) for all the subsets(i.e. partitions/clusters) coincide (are reasonably close), thus aiding in generating 'balanced' clusters. 
+	
+	Unfortunately adding this 'balancing' condition makes the problem NP-hard. Therefore in practice this is achieved by relaxing the definitions and that is what spectral clustering achieves. 
+	
+	\section{Approximating RatioCut for $k=2$}
+	The goal is to solve the optimization problem $$ \min_{A\subset V} RatioCut(A,\bar{A})$$
+	
+	Given $A\subset V$, define $f = (f_{1},\dots,f_{n})' \in \mathbb{R}^{n}$ with entries $$ f_{i} = \begin{cases}
+	\sqrt{\lvert \bar{A} \rvert / \lvert A \rvert}, & \text{if }v_{i}\in A,\\
+	\sqrt{\lvert A \rvert / \lvert \bar{A} \rvert}, & \text{if }v_{i}\in \bar{A}
+	\end{cases}$$
+	
+	Now, we can write the RatioCut using Unnormalized graph Laplacian
+	\begin{align*}
+		f'Lf &= \frac{1}{2}\sum_{i,j=1}^{n}w_{ij}(f_{i}-f_{j})^{2}\\
+		&= \frac{1}{2} \sum_{i\in A, j\in \bar{A}} w_{ij} \bigg(\sqrt{\frac{\lvert \bar{A} \rvert}{\lvert A \rvert}} + \sqrt{\frac{\lvert A \rvert}{\lvert \bar{A} \rvert}}\bigg)\\
+		& \hspace{10pt}+ \frac{1}{2} \sum_{i\in \bar{A}, j\in A} w_{ij} \bigg(-\sqrt{\frac{\lvert \bar{A} \rvert}{\lvert A \rvert}} - \sqrt{\frac{\lvert A \rvert}{\lvert \bar{A} \rvert}}\bigg)\\
+		&= \frac{1}{2}\sum_{i=1}^{k}W(A_{i},\bar{A}_{i})\bigg(\frac{\lvert \bar{A}_{i} \rvert}{\lvert A_{i} \rvert} + \frac{\lvert A_{i} \rvert}{\lvert \bar{A}_{i} \rvert} + 2\bigg)\\
+		&= cut(A,\bar{A})\bigg(\frac{\abs{A} + \abs{\bar{A}}}{\abs{A}} + \frac{\abs{A} + \abs{\bar{A}}}{\abs{\bar{A}}}\bigg) \hspace{20pt}\bigg[\because 2 = \frac{\abs{A}}{\abs{A}} + \frac{\abs{\bar{A}}}{\abs{\bar{A}}}\bigg]\\
+		&= \abs{V}\cdot RatioCut(A,\bar{A}) \hspace{20pt} \bigg[\because \abs{A}+\abs{\bar{A}} = \abs{V}, \frac{cut(A,\bar{A})}{\abs{A}} + \frac{cut(A,\bar{A})}{\abs{\bar{A}}} = RatioCut(A,\bar{A})\bigg]
+	\end{align*}
+	Also,
+	$$ f\cdot\mathbf{1} = \sum_{i=1}^{n}f_{i} = \sum_{i\in A} \sqrt{\frac{\abs{\bar{A}}}{\abs{A}}} - \sum_{i\in \bar{A}} \sqrt{\frac{\abs{A}}{\abs{\bar{A}}}} = \abs{A} \sqrt{\frac{\abs{\bar{A}}}{\abs{A}}} - \abs{\bar{A}} \sqrt{\frac{\abs{A}}{\abs{\bar{A}}}} =0 \implies f \perp \mathbf{1} $$
+	$$ \norm{f}^{2} = \sum_{i=1}^{n}f_{i}^{2} = \abs{A} \frac{\abs{\bar{A}}}{\abs{A}} + \abs{\bar{A}} \frac{\abs{A}}{\abs{\bar{A}}} = \abs{A}+\abs{\bar{A}} = n
+	$$
+	Thus the goal is to find such a vector $f$ that minimizes $f'Lf$ under the conditions $f \perp \mathbf{1}$ and $\norm{f} = \sqrt{n}$. Here $n$ is the total number of vertices in the graph, hence is a constant in this equation. This means that the vector $f$ that minimizes $f'Lf$ will also minimize $\frac{f'Lf}{n} = \frac{f'Lf}{\norm{f'f}} $. \\
+	
+	Rayleigh-Ritz (\cite{rayleigh-ritz}) theorem states that
+	\begin{quote}
+		Let $A \in \mathbb{C}$ be a Hermitian Matrix, and 'Rayleigh quotient' be the function defined as $$R: \mathbb{C}^{n} \backslash \{\mathbf{0}\}\to \mathbb{R}, 
+	 R(x) = \frac{x^{H}Ax}{x^{H}x}, \norm{x}\neq 0 $$ then the eigenvectors of $A$ are the critical points of $R(x)$ and eigenvalues of $A$ are the values of $R(x)$ at those critical points. 
+	\end{quote}
+	Consequently, 
+	$$ \lambda_{max} = \max_{\norm{x}\neq 0}\frac{x^{H}Ax}{x^{H}x} \hspace{20pt} \text{ and } \hspace{20pt} \lambda_{min} = \min_{\norm{x}\neq 0}\frac{x^{H}Ax}{x^{H}x} $$
+	
+	Thus, $f$ would be the eigenvector corresponding to the smallest eigenvalue of $L$. However, we know that the smallest eigenvalue of $L$ is $0$ with eigenvector as $\mathbf{1}$. Hence, we can use the second eigenvector of $L$ as the minimizer of the RatioCut function. This is just the solution to the 'relaxed' problem. Hence to find the partition of the graph, we need to transform this real-valued solution into discrete solution. The simplest way to do this is to use the sign of the $f$ as the indicator function. i.e. split the graph in to $A$ and $\bar{A}$ by $A$ is set of the vertices where the corresponding element is non-negative and $\bar{A}$ is the remaining. i.e. $$\begin{cases}
+	v_{i} \in A, &f_{i} \ge 0\\ v_{i} \in \bar{A} & f_{i} < 0
+	\end{cases} $$
+	
+	In practice, what most spectral clustering algorithms do, instead is to treat the elements (coordinates) of $f$ as points in $\mathbb{R}$ and use $k-$means to cluster them into two clusters (say $C_{1}$ and $C_{2})$ and then carry over the clustering to the graph by choosing points as 
+	$$\begin{cases}
+	v_{i} \in A, &f_{i} \in C_{1}\\ v_{i} \in \bar{A} & f_{i} \in C_{2}
+	\end{cases} $$
+	
+	This is exactly the unnormalized spectral clustering for $k=2$. 
+	
+	\section{Approximating RatioCut for arbitary $K$}
+	Generalizing the above method, we partition the set of vertices $V$ into $k$ sets $A_{1},\dots,A_{k}$. We define $k$ indicator vectors $h_{j} = (h_{1,j},\dots,h_{n,j})'$ by $$ h_{i,j} = \begin{cases}
+	1/\sqrt{\abs{A_{j}}} & \text{if } v_{i}\in A_{j}\\ 0 &\text{ otherwise }
+	\end{cases} (i = 1,\dots,n; j=1,\dots,k)$$
+	Let $H \in \mathbb{R}^{n\times k}$ be the matrix of the $k$ indicator vectors above. Note that the columns of $H$ are orthonormal to eachother, i.e. $H'H = I$. Applying the calculations similar to the last section we find that $$h_{i}'Lh_{i} = \frac{cut(A_{i})}{\abs{A_{i}}} = (H'LH)_{ii}$$
+	Thus,
+	$$ RatioCut(A_{1},\dots,A_{k}) = \sum_{i=1}^{k}h_{i}'Lh_{i} = \sum_{i=1}^{k}(H'LH)_{i} = Trace(H'LH)$$
+	
+	Hence the goal of clustering would be minimize Trace of $H'LH$ with $H$ orthonormal as defined above. Again, a version of Rayleigh-Ritz theorem (\cite{rayleigh-ritz-trace-min}) states that this is achieved by taking the first $k$ eigenvectors of $L$ corresponding to the $k$ smallest eigenvalues. Note that H is the same as matrix $U$ in unnormalized spectral clustering mentioned in chapter 4. Again converting this to the discretion partition, we get the unnormalized spectral clustering algorithm mentioned in chapter 4. 
+	
+	\section{Approximating Ncut}
+	Similar to RatioCut, for $k=2$ we define cluster indicator vector $f$ by $$ f_{i} = \begin{cases}
+	\sqrt{\frac{vol(\bar{A})}{vol(A)}} & \text{ if }v_{i} \in A,\\
+	-\sqrt{\frac{vol(A)}{vol(\bar{A})}} & \text{ if }v_{i} \in \bar{A}
+	\end{cases}$$
+	
+	Similar to RatioCut, we can check that $(Df)'\mathbf{1} = 0$ and $f'Df = vol(V)$. Thus $f'Lf = vol(V)Ncut(A,\bar{A})$. So the problem is now converted to minimizing $f'Lf$ subject to $f$ as defined above such that $Df \perp \mathbf{1}$ and $f'Df = vol(V)$. 
+	
+	Again, relaxing the problem by allowing to take arbitrary values, we substitute $g=D^{1/2}f$. Now the minimization problem becomes $$\min_{g\in \mathbb{R}^{n}} g'D^{-1/2}LD^{-1/2}g, \hspace{20pt}\text{ such that } g\perp \mathbf{1}, \norm{g}^{2} = vol(V)$$
+	
+	Since $D^{-1/2}LD^{-1/2} = L_{sym}$, the problem becomes, again to minimize $g'L_{sym}g$ with $\norm{g} = \sqrt{vol(V)}$. Once again, Rayleigh-Ritz theorem states that the minimizer is the eigenvector of $L_{sym}$. We know that the first eigenvector is $D^{1/2}\mathbf{1}$ and constant eigenvalue is $vol(V)$, the solution of this minimization problem is given by second eigenvector of $L_{sym}$. Re-substituting $f=D^{-1/2}g$ and using parts (b) and (c) of proposition 3, we can state that, since $g=D^{1/2}f$ is an eigenvector of $L_{sym}$, letting $\lambda$ be the corresponding eigenvalue, $f$ is eigenvector of $L_{rw}$ and solves the generalized eigenvalue problem $Lu=\lambda Du$. 
+	
+	Extending this for $k>2$, let
+	$$ h_{i,j} = \begin{cases}
+	1/\sqrt{vol(A_{j})} &\text{ if } v_{i}\in A_{j}\\ 0 & \text{ otherwise }
+	\end{cases} (i = 1,\dots,n; j=1,\dots,k)$$
+	
+	Now, set the matrix $H$ as the matrix containing first $k$ indicator vectors as columns. Observe that $H'H=I$, $h_{i}'Dh_{i} = 1$ and $h_{i}'Lh_{i} = cut(A_{i},\bar{A}_{i})/vol(A_{i})$. Hence the minimization problem now becomes the trace minimization problem for $Trace(H'LH)$ subject to $H'DH=I$. Relaxing the discreteness condition and substituting $T = D^{1/2}H$, we get $min T\in \mathbb{R}^{n\times k}T'L_{sym}T$, subject to $T'T = I$. Once again, combining the Rayleigh-Ritz theorem as applied to RatioCut, and Proposition 3 parts (b) and (c) we can see that the solution is to construct $H$ with the first $k$ eigenvectors of $L_{rw}$, or the first $k$ generalized eigenvectors of $Lu=\lambda Du$. This yields the normalized spectral clustering algorithm according to Shi and Malik (2000) which is also mentioned in chapter 4, and implemented in a jupyter notebook on github ripository.
+	 
+	 \section{Comments on relaxation approach}
+	 The author notes that the relaxation approach leads to an approximation of the real solution. There are no guarantees about the quality of the cut generated by these algorithms. For example, in the cockroach graph (which looks like a horizontal ladder with few rungs removed), the ideal cut will be vertical where the rungs have been removed. (need to get graphic in here) but the unnormalized spectral cut always generates horizontal cut. Here the ideal RatioCut = 1 but unnormalized clustering generates $2/k$, thus order of $n$ factors worse. it is known that an algorithm that generates a constant RatioCut does not exist. 
+	 
+	 The relaxation techniques used here are not unique and many such techniques have been devised, mainly because they usually generated a standard Linear algebra problem to solve. 
+	
 	\thispagestyle{fancy}
 	\begin{thebibliography}{9}
 	\thispagestyle{fancy}
+		\bibitem{Dr.zhou - Notes} need to add citation for lecture slides by Dr. Zhou for Rayleigh quotient 
+		\bibitem{github-repo}github repository with implemented algorithms. 
 		\bibitem{gene_cheung} 
 		Cheung, Gene, Magli, Enrico, Tanaka, Yuichi, Ng, Michael K. "Graph Spectral Image Processing". Proceedings of the IEEE, vol 106, No. 5, pp. 907-930 May 2018
+		\bibitem{rayleigh-ritz} https://planetmath.org/RayleighRitzTheorem
+		\bibitem{rayleigh-ritz-trace-min} http://people.inf.ethz.ch/arbenz/ewp/Lnotes/chapter13.pdf
 
 	\end{thebibliography}
 \end{document}
