@@ -20,6 +20,7 @@
 \makeatother
 
 \newtheorem{prop}{Proposition}
+\newtheorem{theorem}{Theorem}
 \newcommand{\abs}[1]{\lvert {#1} \rvert}
 \newcommand{\norm}[1]{\lvert\lvert {#1} \rvert\rvert}
 
@@ -39,6 +40,8 @@
 	\maketitle
 	\chapter{Introduction}
 	\thispagestyle{fancy}
+	This is a paper report on the paper 'A tutorial on spectral clustering' by Ulrike von Luxburg \cite{MainPaper}. All the sections in this report are taken or paraphrased from \cite{MainPaper} and not original work. The python code in the github repository\cite{github-repo} is based on the algorithms stated and described in the paper \cite{MainPaper}.
+	
 	This tutorial is setup up as self-contained introduction to spectral clustering. It derives spectral clustering from scratch and present different points of view to why spectral clustering works. 
 	
 	\chapter{Similarity graphs}
@@ -249,15 +252,161 @@
 	 
 	 The relaxation techniques used here are not unique and many such techniques have been devised, mainly because they usually generated a standard Linear algebra problem to solve. 
 	
+	\chapter{Random walks point of view}
+	A random walk on a graph is a stochastic process which randomly jumps from vertex to vertex. This section interprets spectral clustering as attempt to find the partition of the graph such that a random walk stays within a partition as long as possible. This makes more sense if we define the probability of jumping to a node to depend upon the edge weight between the two nodes. This would mean that the random walk would stay in the partition if the edges of the least probability are cut. Formally, the transition probability of jumping from $v_{i}$ to $v_{j}$ is given by $p_{ij} = w_{ij}/d_{i}$, i.e. the proportion of total degree of node $v_{i}$ that is contributed by edge $w_{ij}$. Thus transition matrix $P = (p_{ij})$ is $P - D^{-1}W$. If the graph is connected and non-bipartite, then the stationary distribution (probability distribution that does not change from one step to next) of the random walk is always unique and can be represented as $\pi = [\pi_{1},\dots,\pi_{n}]'$ where $\pi_{i} = d_{i}/vol(V)$.
+	
+	Recall that graph laplacian of random walk $L_{rw} = I-D^{-1}W = I-P$. This means that if $(\lambda, u)$ is an eigenpair of $L_{rw}$ then $L_{rw}u=\lambda u \implies (I-P)u = \lambda u \implies Pu = (1-\lambda)u$. Thus $(1-\lambda)$ is an eigenvalue of $P$ and $u$ is the corresponding eigenvector. This means that the eigenvectors corresponding to largest eigenvalues of $P$ and consecutively, the smallest eigenvalues of $L_{rw}$ can be used to describe the cluster properties of the graph. 
+	
+	\section{Random walks and Ncut}
+	\begin{prop} (Ncut via transition probabilities) Let $G$ be connected and non bi-partite. Assume that we run the random walk $(X_{t})_{t\in\mathbb{N}}$ starting with $X_{0}$ in the stationary distribution $\pi$. For disjoint subsets $A,B \subset V$, denote by $P(B\lvert A) = P(X_{1} \in B \lvert X_{0 \in A})$ Then, $Ncut(A,\bar{A}) = P(\bar{A}\lvert A) + P(A\lvert \bar{A})$ 
+	
+	\textit{Proof:} $$P(X_{0}\in A, X_{1}\in B) = \sum_{i\in A, j\in B}	P(X_{0} = i, X_{1} = j) = \sum_{i\in A, j\in B}\pi_{i}p_{ij} = \sum_{i\in A, j\in B}\frac{d_{i}}{vol(V)}\frac{w_{ij}}{d_{i}} = \frac{1}{vol(V)} \sum_{i\in A, j\in B}w_{ij}$$
+	$$ P(X_{1} \in B \lvert X_{0}\in A) = \frac{P(X_{0}\in A, X_{1}\in B)}{P(X_{0} \ \in A)} = \bigg( \frac{1}{vol(V)}\sum_{i\in A, j\in B}w_{ij}\bigg)\bigg(\frac{vol(A)}{vol(V)}\bigg)^{-1} = \frac{1}{vol(A)}\sum_{i\in A, j\in B}w_{ij}$$
+	The final result them follows from definition of Ncut. 
+	\end{prop}
+
+	Thus, we can see that minimizing Ncut will reduce the probability of random walk transitioning from one subset to its complement, hence traversing from one cluster to next. 
+
+	\section{The commute distance}
+	Commute distance between two vertices is defined as the time taken to travel from once vertex to the other and back. Hence reducing the commute distance is not a problem to find shortest path, but to find several short ways. This happens if the points involved in the path will be located in the same high-density region. Thus commute distance is very well-suited to clustering. Here the 'short' distance between two points is equivalent to points being close, hence similar and hence the edge weight being high. 
+	
+	Commute distance can be computed with help of generalize inverse of the graph Laplacian $L$. Recall that $L$ is diagonalizable, hence $L = U\Lambda U'$, where $U$ is matrix of eigenvectors as columns and $\Lambda$ is the diagonal vector of eigenvalues. Since $0$ is the smallest eigenvalue of $L$, it is not invertable. Hence we define $L^{\dagger} = U\Lambda^{\dagger}U'$ where $\Lambda^{\dagger}$ is diagonal matrix with entries $1/\lambda_{i}$ if $\lambda_{i} \ne 0$ and $0$ if $\lambda_{i}=0$. Thus entries of $L^{\dagger}$ are $l^{\dagger}_{ij} = \sum_{k=2}^{n}\frac{1}{\lambda}_{k}u_{ik}u_{jk}$ and it is symmetric positive semi-definite. 
+	
+	\begin{prop}(Commute distance) Let $G=(V,E)$ a connected, undirected graph. Denote by $c_{ij}$, the commute distance between vertex $v_{i}$ and vertex $v_{j}$, and  by $L^{\dagger}=(l^{\dagger}_{ij=1\dots n})$ the generalized inverse of $:$, then we have $c_{ij} = vol(V)(l^{\dagger}_{ii}-2l^{\dagger}_{ij}+l^{\dagger}_{j}) = vol(V)(e_{i}-e_{j})'
+			L^{\dagger}(e_{i}-e_{j})$
+	\end{prop}
+
+	This proof shows that $\sqrt{c_{ij}}$ can be considered as eucledian difference. Spectral clustering here can be achieved by using proposition 6, to calculate $c_{ij} = vol(V)\norm{z_{i}-z_{j}}^{2}$ where $z_{i}$ is the point in $\mathbb{R}^{n}$ corresponding to $i$-th row of $U(\Lambda^{\dagger})^{1/2}$.
+	
+	This approach differs considerably in following ways:
+	\begin{enumerate}
+		\item In spectral clustering we map vertices of the graphs on rows of the matrix $U$ while in commute time we map vertices on rows on $(\Lambda^{\dagger})^{1/2}U$, thus scaling them by inverse eigenvalues of $L$.
+		\item Spectral clustering considers first $k$ columns of matrix while commute time considers all columns. 
+		\item If a graph has $k$ disconnected components, first $k$ eigenvalues will be 0 and first $k$ columns of $U$ are the indicator vectors of the clusters. However the first $k$ columns of $(\Lambda^{\dagger})^{1/2}U$ are zeros because of the zero eigenvalues. Hence the portion of the matrix that contains the useful information in both methods are completely different.  
+	\end{enumerate}
+	
+	Note, however that if the graph is fully connected, then there is one eigenvector with eigenvalue 0 and in this case, this vector is ignored in both cases. Also the eigenvectors related to small eigenvalues are amplified since they are multiplied by $1/\lambda_{i}$. Hence both techniques behave similarly.
+
+	The author states that the relation between spectral clustering and commute time seems to be loose but helpful to understand the intuition. However it may be possible, in some cases, to tighten the relationship in some cases like the similarity function being strictly positive definite.
+	
+	
+	\chapter{Perturbation theory point of view}
+	Perturbation theory states that the distance between a matrix $A$ and $A+H$, where $H$ is a small perturbation is bounded by a constant multiple of the norm of $H$. This constant depends on the eigenvalue and how far is the eigenvalue from rest of the spectrum. The basic idea here is that in the case where graph has $k$ connected clusters, the first $k$ eigenvectors of $L$ or L$_{rw}$ are indicator vectors of clusters and $k$-means algorithm would be able to trivially group the clusters. In a nearly-ideal case where the inter-cluster similarity is not exactly zero, the perturbation theory tells us that the eigenvectors will still be very close to the ideal indicator vectors. Hence, if the perturbation is not too large, i.e. the clusters are not very similar to each other, the $k$-means algorithm will still be able to separate the points into clusters.
+	
+	\section{The formal perturbation argument}
+	The formal basis of this approach is the Davis-Kahan theorem stated below. For a bit of background, in perturbation theory, the distances between subspaces is usually measured in 'canonical angles' a.k.a. 'principle angles'. Let $ \mathcal{V}_{1} $ and $\mathcal{V}_{2}$ be two $p$-dimensional subspaces of $\mathbb{R}^{d}$, $V_{1}$ and $V_{2}$ be two matrices such that columns form the orthonormal basis of $\mathcal{V}_{1}$ and $\mathcal{V}_{2}$ respectively. Then $\cos\Theta_{i}$ of the principle angles $\Theta_{i}$ are the singular values of $V_{1}'V_{2}$. Note that for one-dimensional case, canonical angles are the angles between the two systems and that the canonical angles can be defined even if the dimensions of two matrices are not the same. In this case the number of angles defined would be equal to the smaller number of dimensions of the two matrices. 
+	
+	\begin{theorem} (Davis-Kahan) Let $A$, $H\in\mathbb{R}^{n\times n}$ be symmetric matrices, and let $\norm{\cdot}$ be the Frobenius norm or the two norm of matrices, respectively. Consider $\tilde{A} = A+H$ as a perturbed version of $S$. Let $S_{1} \subset \mathbb{R}$ be an interval. Denote by $\sigma_{S_{1}}(A)$ the set of eigenvalues of $A$ which are contained in $S_{1}$ and by $V_{1}$ the eigenspace corresponding to all those eigenvalues. Denote by $\sigma_{S_{1}}(\tilde{A})$ and $\tilde{V}_{1}$ the analogous quantities for $\tilde{A}$. Define the distance between $S_{1}$ and the spectrum of $A$ outside of $S_{1}$ as $$\delta = min(\abs{\lambda - s}); \lambda\text{ eigenvalue of }A, \lambda\notin S_{1}, s\in S_{1}$$ Then the distance $d(V_{1},\tilde{V}_{1}) =\norm{\sin \Theta(V_{1},\tilde{V}_{1})} $ between two subspaces $V_{1}$ and $\tilde{V}_{1}$ is bounded by $$ d(V_{1},\tilde{V}_{1}) \le \frac{\norm{H}}{\delta} $$
+	\end{theorem}
+
+	The author points to Section V.3 of Stewart and Sun (1990)\cite{stewart-sun-1990}. To understand what the theorem means to spectral clustering, Let $A$ be the graph Laplacian $L$ of the ideal case where graph has $k$ connected components and $\tilde{A}$ be the perturbed case where the $k$ compnents are no longer completely disconnected but are connected by a few edges with low weight. Let the graph Laplacian of the 'lightly connected' case be $\tilde{L}$. Let $\lambda_{1},\dots,\lambda_{n}$ and $\tilde{\lambda}_{1},\dots,\tilde{\lambda}_{n}$ be the eigenvalues of $L$ and $\tilde{L}$ respectively. We have to choose $S_{1}$ such that $\lambda_{1},\dots,\lambda_{k}$ and $\tilde{\lambda}_{1},\dots,\tilde{\lambda}_{k}$ are contained in $S_{1}$. This is easier when $H=L-\tilde{L}$ is small and $\abs{\lambda_{k} - \lambda_{k+1}}$ is large. If we can find such a set (interval) $S_{1}$, the Davis-Kahan theorem states that the distance between the eigenspaces of the first $k$ eigenvectors of $L$ and $\tilde{L}$ would be bounded by $\norm{H}/\delta$. Hence even for $\tilde{L}$, the spectral clustering using first $k$ eigenvectors will find appropriate $k$ clusters. How 'appropriate' the clustering is depends upon how large $\abs{\lambda_{k}-\lambda_{k+1}}$ is. 
+	
+	It is worth noting that if $\norm{H}$, which corresponds to the noise or inter-cluster similarity in the graph, is large we may not be able to find $S_{1}$ that has $k$ eigenvalues both of $L$ and $\tilde{V}$. In this case, the algorithm may end up using few more or less than $k$ eigenvectors, $\tilde{k}$ then the ideal case, $k$ and result in lower quality of clustering. The same may happen if the eigenvalues $\lambda_{k}$ and $\lambda_{k+1}$ are close to each other.
+	
+	\section{Comments about perturbation approach}
+	Given that perturbation theory explains why the algorithms designed for ideal case of $k$ connected components would also work for graphs where clusters are not completely disconnected, we have to be cautious. For example, many authors use the first $k$ eigenvectors of similary matrix $S$ or weight matrix $W$ to discover clusters. Given the fact that any block diagonal symmetric matrix has the nice property that there is a basis of eigenvectors that will be zero outside a given block and real in the block, being block diagonal for ideal case is only a necessary condition for use of these eigenvectors for clustering. However, for successful use of these eigenvectors, at least two more properties should be satisfied:
+	\begin{enumerate}
+		\item We need to make sure that order of the eigenvalues and eigenvectors are meaningful. For Laplacian this is always true. Since we know that any connected component will have exactly one eigenvector whose eigenvalue $0$, we know that first $k$ eigenvectors of the Laplacian correspond to the $k$ connected components of the graph, with one eigenvector per component. However this is not always true for $S$ or $W$. The two largest eigenvalues of $W$ may come from the same block. In this case taking the $k$ eigenvector would mean some blocks are represented more than once and others are not represented at all.
+		
+		\item Second property that must be satisfied is that in the ideal case, the entries of the eigenvectors on the components should be 'safely bounded away' from 0. In the ideal case a non-zero entry will indicate that the point is a member of the respective cluster. However due to noise, if two entries of the eigenvectors of the perturbed matrix may be small values say $\tilde{u}_{1,i}=\epsilon_{1}$ and $\tilde{u}_{1,j}=\epsilon_{2}$, in this case it is unclear if the point should be considered to be a member of cluster $i$ or $j$. This may still be a small problem for $L$ and $L_{rw}$, but for $L_{sym}$ the eigenvectors are not $\mathbf{1}_{A_{i}}$ but $D^{1/2}\mathbf{1}_{A_{i}}$. The algorithm is then very sensitive to the 'noise', especially if some of the nodes have very low degree. Hence sometimes row-normalization' will be applied to the matrix $U$ in the algorithm of Ng et al. (2002). however, for the two small component case (with $\epsilon_{1}$ and $\epsilon_{2}$) both the compnents would be multiplied by $1/\sqrt{\epsilon_{1}^{2}+\epsilon_{2}}$ and be very large, thus masking the real indicator compnents. On the other hand, some argue that a node with very low degree would be considered an outlier and should not be taken into account while judging the quality of clustering. 
+	\end{enumerate}
+	The discussion above shows that unnormalized spectral clustering (with $L$) and normalized spectral clustering with Random walk Laplacian ($Lrw$) are well justified but normalized spectral clustering with $L_{sym}$ should be used with caution, especially if the graph contains vertices with very low degree. 
+	
+	\chapter{Practical details}
+	
+	This section discusses some of the issues that come up while implementing the spectral clustering algorithms.
+	
+	\section{Similarity Graph}
+	\subsection{Similarity Function}
+	The similarity function itself has to be 'meaningful' because it induces the local neighborhoods formed in the graph. What it means for two points to be 'similar' is dependent on the domain and the application of the data. For example, similarity function between people would be very different from that between documents. Even within documents, the similarity would different based on the type of categorization needed (by author, title, geographical region of origin, historical era of origin etc). For data in Eucledian space, Gaussian similarity function $exp(-\norm{x_{i}-x_{j}}^{2})/(2\sigma^{2})$ is a reasonable candidate but still the choice of parameter $\sigma$ may prove crucial. It should be noted that the long-range behavior (the value of similarity returned for less similar or dis-similar data points) is less important because will  eventually not connect these points in similarity graph anyways.
+	\subsection{Type of similarity graph}
+	Next choice is to choose the graph type, $k$-nearest neighbor, $\epsilon$-neighborhood etc. 
+	
+	The paper shows using a data set of two 'moons' and a Gaussian how $\epsilon$-neighborhood graph has trouble when distance between data points in different regions of the graph is different. 
+	
+	On the other hand, the $k$-nearest neighbor graph may connect a data point in a sparse cluster with a nearby dense cluster or it may break a cluster into several clusters if there are high density regions within a cluster that are separated from each other.
+	
+	The mutual $k$-nearest neighbor graph has a property that it tends to connect points within regions of constant density but does not connect regions of different densities. Thus it does well with graphs of different scales but not with graphs with a mixture of multiple scales. 
+	
+	For Gaussian, generally a fully connected graph is used but the parameter $\sigma$ plays the role of $\epsilon$ here by drastically reducing the weights of the edges between points that are far away from each other.
+	
+	The author suggests to work with $k$-nearest neighbor graph as first choice as it is simple and comparatively robust to poor choice of parameters.
+	
+	\subsection{Parameters of the graph}
+	Although there are theoretical results that may guide the choice of $k$ or $\epsilon$, very few are of practical use because most results hold in the limit for sample size $n \to \infty$.
+	
+	For rules of thumb, as the author puts it, when working with $k$-nearest neighborhood graph, choose $k$ such that resulting graph is connect or has significantly fewer connected components. e.g. for a large graph, start with $k$ in order of $log(n)$
+	
+	For mutual $k$-nearest neighbor graph, the $k$ is significantly larger than that for $k$-nearest neighbor graph, but no such heuristic is available to choose the parameter $k$.
+	
+	For $\epsilon$-neighborhood graph, author suggests to choose $\epsilon$ as the length of the longest edge of minimal spanning tree of fully connected graph. There are several algorithms to determine the minimal spanning tree. However when outliers exist or when clusters are too far, this will choose very large values, thus connecting outliers with the rest of the data. 
+	
+	Finally, for fully connected graph, a scaling of similarity function can be used so that the points with similarity significantly larger than 0 are not too large or small. One can choose $\sigma$ to be mean of distance to its $k$-th nearest neighbor or by minimal spanning tree. 
+	
+	Finding such rules with theoretical justification is considered an interesting important topic for future research. 
+	
+	\section{Computing the Eigenvectors}
+	Computing the $k$-eigenvectors of a large matrix by itself may be an expensive task. Fortunately, in practice, several edges in the graph are removed using $k$-nearest neighbor or $\epsilon$-neighborhood graph. This results in a sparse matrix instead of a full matrix. Now, sparse eigensolvers like power method or Krylov-space methods can be used. These algorithms converge fast when the spectral gap $\gamma_{k} = \abs{\lambda_{k}-\lambda_{k+1}}$ is large. There is a problem when the multiplicity of an eigenvector is more than 1. Also the numerical eigensolvers do not always converge to the cluster indicator vectors. Fortunately, all the vectors in the space spanned by the indicator vectors have to be of the form $u=\sum_{i=1}^{k}a\mathbf{1}_{A_{i}}$. i.e. they are piece-wise constant on the clusters. So the vectors returned by the eigensolver still encode the required information and can be used by $k$-means algorithm to compute the cluster.
+	
+	\section{Number of clusters}
+	Choosing or detecting the number of clusters is a general problem for all the clustering algorithms and a variety of methods exist. Some statistical methods are based on log-likelihood of the data which can be treated in Bayesian or frequentist way. Other examples are methods based on ratio of within-cluster to between cluster similarity, gap statistic, etc. All these methods can be used in spectral clustering. 
+	
+	But additionally one tool specially designed for spectral clustering is eigengap heuristic. The goal is to choose $k$ such that the eigenvalues $\lambda_{1},\dots,\lambda_{k}$ are small but $\lambda_{k+1}$ is relatively large. It has been shown that the cluster sizes are closely related to size of first eigenvalues. This technique works really well if the clusters are well differentiated. But as the cluster boundaries become fuzzy due to clusters being close or overlapping, the technique becomes less effective. 
+	
+	\section{the $k$-means step}
+	The algorithms studied in this paper all use $k$-means clustering. However, in principle any clustering technique can be used. Several authors have used Euclidian distance, hyperplane and other advanced post-processing techniques for eigenvectors to achieve the same goal.
+	
+	\section{Which graph Laplacian to be used?}
+	The answer to this question largely depends on the data. The first aspect to look at is the degree distribution, which are the diagonal values of the degree matrix $D$. If most of the vertices have roughly the same degree, then all Laplacians would be equally effective. However due to various factors, some of which seen earlier in this paper, $L_{rw}$ works better than $L_{sym}$ or $L$.
+	\subsection{Clustering objectives}
+	In general, we have two objectives
+	\begin{enumerate}
+		\item Minimize between-cluster similarity, i.e. minimize $cut(A,\bar{A})$
+		\item Maximize within-cluster similarity, i.e. maximize $W(A,A)$ and $W(\bar{A}, \bar{A})$
+	\end{enumerate}
+
+	Both Ncut and Ratiocut, by definition, directly implement the first criteria. However, second criteria is where the methods behave differently. 
+	$$W(A,A) = W(A,V) - W(A,\bar{A}) - vol(A) - cut(A,\bar{A}) $$ 
+	Thus within-cluster similarity $W(A,A)$ is maximized if $cut(A,\bar{A})$ is small and $vol(A)$ is large. This is implemented in Ncut only. We can see this even more clearly considering the MinimaxCut criterion defined as $$ MinimaxCut(A_{1},\dots,A_{k}) = \sum_{i=1}^{k}\frac{cut(A_{i},\bar{A}_{i})}{W(A_{i},A_{i})} $$ 
+	Note that the denominator in Ncut is $vol(A) = cut(A,\bar{A}) + W(A,A)$. Thus, comparing Ncut and MinimaxCut, both are minimized when $cut(A,\bar{A})$ is minimized. In that case the denominator for Ncut and MinimaxCut will be very close. Thus Minimizing Ncut is the same operation as minimizing MinimaxCut, i.e. spectral clustering with eigenvectors of $L_{rw}$. 
+	
+	On the other hand, RatioCut focuses to maximize $\abs{A}$ and $\abs{\bar{A}}$, thus balancing the count of nodes. This is not related to the volume of cluster, which is based on the edge weights within the cluster. For this reason RatioCut is likely to cluster outliers together or with another cluster. 
+	
+	Thus we can see why clustering with $L_{rw}$ is likely to yield superior results. 
+	
+	\subsection{Consistency issues}
+	Considering the statistical analysis of the Normalized and Unnormalized spectral clustering algorithms, we consider that the datapoints $x_{1},\dots,x_{n}$ to be sampled with a probability distribution $P$ on some underlying dataspace $\chi$. 
+	For both the normalized spectral clustering algorithms it can be proven that as we draw more and more data points, the spectral clustering results converge to to a partition of $\chi$. This convergence implies that the eigenvalues and eigenvectors converge to those of $U$. Thus if we consider a diffusion process on the data space $\chi$ we can say that the partition induced by eigenvectors of $U$ remains consistent (does not make a transition) most of the time. Thus, in real world situations, under mind conditions, all consistency statements about both $L_{sym}$ and $L_{rw}$ hold. 
+	
+	In contrast, the such consistency statements do not hold for unnormalized clustering. Although it is possible to show that such consistency problem can be avoided in situations where the first $k$ eigenvalues are much smaller than the minimal degree of the graph, it is normally too restrictive in real world examples as it results in very few eigenvalues being useful (under the minimal degree constraint)
+	
+	\subsection{Which Laplacian?}
+	 All the evidence shown above and in earlier sections show that normalized spectral clustering has advantages over unnormalized spectral clustering. Also eigenvectors of $L_{rw}$ are cluster indicators while those of $L_{sym}$ are multiplied by $D^{1/2}$. Thus the final choice becomes $L_{rw}$.
+	 
+	 
+	 \chapter{Closing remarks}
+	 Graph Laplacian and spectral clustering has been studied in many different fields by many researchers since 1973. Graph Laplacians have been applied to several use cases in addition to spectral clustering
+	 
+	 An intuition often used graph Laplacian formally looks like a continuous Laplace operator considering the relationship between similarity and distance $w_{ij} = 1/d_{ij}^{2}$. $$w_{ij}\big(f_{i}-f_{j}\big)^{2} \approx \bigg(\frac{f_{i}-f_{j}}{d_{ij}}\bigg)^{2}
+	  $$ 
+	 
+	 This looks like discrete version of the standard Laplace operator $\mathcal{L}$ on $\mathbb{R}^{n}$ which satisfies $$ \langle g,\mathcal{L}g \rangle = \int \abs{\nabla g}^{2} dx$$
+	 
+	 This relation has been studied and shown to be precise. Apart from the application to partitioning problem,s graph Laplacians have been also studied and used for the connection between topology and properties of graphs and graph Laplacians.
+	
+	
+	
 	\thispagestyle{fancy}
 	\begin{thebibliography}{9}
 	\thispagestyle{fancy}
+		\bibitem{MainPaper}
 		\bibitem{Dr.zhou - Notes} need to add citation for lecture slides by Dr. Zhou for Rayleigh quotient 
 		\bibitem{github-repo}github repository with implemented algorithms. 
 		\bibitem{gene_cheung} 
 		Cheung, Gene, Magli, Enrico, Tanaka, Yuichi, Ng, Michael K. "Graph Spectral Image Processing". Proceedings of the IEEE, vol 106, No. 5, pp. 907-930 May 2018
 		\bibitem{rayleigh-ritz} https://planetmath.org/RayleighRitzTheorem
 		\bibitem{rayleigh-ritz-trace-min} http://people.inf.ethz.ch/arbenz/ewp/Lnotes/chapter13.pdf
+		\bibitem{stewart-sun-1990}Stewart and Sun (1990) 
 
 	\end{thebibliography}
 \end{document}
