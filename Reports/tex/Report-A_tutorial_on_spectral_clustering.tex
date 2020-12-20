@@ -160,14 +160,62 @@
 
 	
 	\chapter{Spectral clustering algorithms}
-	This chapter lists 3 classic algorithms, one for unnormalized and two for normalized spectral clustering. These have been implemented in python notebooks on the git repository and are excluded here.
+	This chapter lists 3 classic algorithms, one for unnormalized and two for normalized spectral clustering. These have been implemented in python notebooks on the git repository.
 	
+	For the below algorithms, we assume that our data consists on $n$ points $x_{1},\dots,x_{n}$ with a symmetric, non-negative function $s_{ij}=s(x_{i},x_{j})$ and a similarity matrix $S=(s_{ij})_{i,j=1,\dots,n}$. 
+	
+	All three algorithms essentially follow the same steps, using the first $k$ eigen vectors of the graph Laplacian, create a matrix and then create $k$ clusters from the rows of that matrix using k-Means algorithm. Finally, create the clusters of data points with the same indices as the indices of the matrix rows in the $k$ clusters formed by k-means.
+	
+	\section{Unnormalized Spectral Clustering}
+	
+	Input: Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct.
+	\begin{itemize}
+		\item Construct a similarity graph by one of the ways described in Section 2. Let $W$ be its weighted adjacency matrix.
+		\item Compute the unnormalized Laplacian $L$.
+		\item Compute the first $k$ eigenvectors $u_{1},\dots, u_{k} $ of $L$.
+		\item Let $U \in \mathbb{R}^{n\times k}$ be the matrix containing the vectors $u_{1},\dots, u_{k}$ as columns.
+		\item For $i = 1,\dots, n$, let $y_{i} \in \mathbb{R}^k$ be the vector corresponding to the $i^{th}$ row of $U$.
+		\item Cluster the points $(y_{i}), i=1,\dots,n$ in $\mathbb{R}^k$ with the k-means algorithm into clusters
+		$C_{1},\dots, C_{k}$.
+	\end{itemize}
+	Output: Clusters $A_{1},\dots, A_{k}$ with $A_{i} = \{x_{j}| y_{j} \in C_{i}\}$.
+	
+
+	\section{Normalized Spectral Clustering - Shi \& Malik (2000)\cite{Shi-Malik-maxcut-00}}
+	\textit{This algorithm uses generalized eigenvectors of L, which are the eigenvectors of normalized random-walk laplacian $L_{rw}$}
+	
+	Input: Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct.
+	\begin{itemize}
+		\item Construct a similarity graph by one of the ways described in Section 2. Let $W$ be its weighted adjacency matrix.
+		\item Compute the unnormalized Laplacian $L$.
+		\item Compute the first $k$ generalized eigenvectors $u_{1},\dots, u_{k} $ of generalized eigenproblem $Lu = \lambda Du$.
+		\item Let $U \in \mathbb{R}^{n\times k}$ be the matrix containing the vectors $u_{1},\dots, u_{k}$ as columns.
+		\item For $i = 1,\dots, n$, let $y_{i} \in \mathbb{R}^k$ be the vector corresponding to the $i^{th}$ row of $U$.
+		\item Cluster the points $(y_{i}), i=1,\dots,n$ in $\mathbb{R}^k$ with the k-means algorithm into clusters $C_{1},\dots, C_{k}$.
+	\end{itemize}
+	Output: Clusters $A_{1},\dots, A_{k}$ with $A_{i} = \{x_{j}| y_{j} \in C_{i}\}$.
+
+	\section{Normalized Spectral Clustering - Ng, Jordan \& Weiss (2002)\cite{ng-jordan-01}}
+	\textit{This algorithm uses the eigenvectors of normalized symmetric laplacian $L_{sym}$}
+
+	Input: Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct.
+	\begin{itemize}
+		\item Construct a similarity graph by one of the ways described in Section 2. Let $W$ be its weighted adjacency matrix.
+		\item Compute the normalized Laplacian $L_{sym}$.
+		\item Compute the first $k$ eigenvectors $u_{1},\dots, u_{k} $ of $L_{sym}$.
+		\item Let $U \in \mathbb{R}^{n\times k}$ be the matrix containing the vectors $u_{1},\dots, u_{k}$ as columns.
+		\item Form the matrix $T \in \mathbb{R}^{n\times k}$ from $U$ by normalizing the norm to 1, $t_{ij} = u_{ij}/(\sum_{k}u_{ik}^2)^{1/2}$
+		\item For $i = 1,\dots, n$, let $y_{i} \in \mathbb{R}^k$ be the vector corresponding to the $i^{th}$ row of $U$.
+		\item Cluster the points $(y_{i}), i=1,\dots,n$ in $\mathbb{R}^k$ with the k-means algorithm into clusters $C_{1},\dots, C_{k}$.
+	\end{itemize} Output: Clusters $A_{1},\dots, A_{k}$ with $A_{i} = \{x_{j}| y_{j} \in C_{i}\}$.
+
+
 	
 	\chapter{Graph cut point of view}
 	The intuition of clustering is to separate points into groups so that the edges between groups have low weight. Thus the clustering can be viewed as mincut problem.
 	
 	Recall the notation $W(A,B) = \sum_{i\in A, j\in B} w_{ij}$ and $\bar{A}$ for compement of $A$. Thus choosing the $k$ partitions $A_{1},\dots,A_{k}$ is to minimize $$ cut(A_{1},\dots,A_{k}) = \frac{1}{2}\sum_{i=1}^{k}W(A_{i},\bar{A}_{i}) $$ 
-	The factor 1/2 is for notational consistency, otherwise the edges in the cut will be counted twice, once from $A$ to $\bar{A}$ and then from $\bar{A}$ to $A$. The problem is that in many cases this separates in to 'unbalanced' clusters where some clusters have only one (or very few) nodes while others are fairly large. One way to circumvent is to explicitly request that the sets $A_{1},\dots,A_{k}$ are 'reasonably large'. Two common approaches are RatioCut (Hagen \& Kahng, 1992) where the size of $A_{i}$ is measured by the number of vertices $\lvert A \rvert$ and Normalized cut, or Ncut, (Shi \& Malid 2000) where the size $A_{i}$ is measured by sum of weights of its edges $vol(A)$. The definitions are	
+	The factor 1/2 is for notational consistency, otherwise the edges in the cut will be counted twice, once from $A$ to $\bar{A}$ and then from $\bar{A}$ to $A$. The problem is that in many cases this separates in to 'unbalanced' clusters where some clusters have only one (or very few) nodes while others are fairly large. One way to circumvent is to explicitly request that the sets $A_{1},\dots,A_{k}$ are 'reasonably large'. Two common approaches are RatioCut (Hagen \& Kahng, 1992) where the size of $A_{i}$ is measured by the number of vertices $\lvert A \rvert$ and Normalized cut, or Ncut, (Shi \& Malik 2000) where the size $A_{i}$ is measured by sum of weights of its edges $vol(A)$. The definitions are	
 	\begin{align*}
 		RatioCut(A_{1},\dots,A_{k}) &= \frac{1}{2} \sum_{i=1}^{k}\frac{W(A_{i},\bar{A}_{i})}{\lvert A_{i} \rvert}
 		= \sum_{i=1}^{k}\frac{cut(A_{i},\bar{A}_{i})}{\lvert A_{i} \rvert} \\
