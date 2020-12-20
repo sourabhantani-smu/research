@@ -1,0 +1,54 @@
+#!/bin/bash
+
+mv Reports/tex/*.pdf Reports/PDF
+
+curDir=$(pwd)
+for dir in $(find . -type d -print)
+do
+  cd $dir
+  
+  if [ -e *.aux ]
+  then
+    rm *.aux
+  fi
+  
+  if [ -e *.bbl ]
+  then
+    rm *.bbl
+  fi
+  
+  if [ -e *.blg ]
+  then
+    rm *.blg
+  fi
+  
+  if [ -e *.log ]
+  then
+    rm *.log
+  fi
+  
+  if [ -e *.synctex.gz ]
+  then
+    rm *.synctex.gz
+  fi
+  
+  
+  for f in *\ *
+  do
+    new="${f// /_}"
+    if [ "$new" != "$f" ]
+      then
+      if [ -e "$new" ]
+      then
+	echo not renaming \""$f"\" because \""$new"\" already exists
+      else
+        if [ -e "$f" ]
+        then
+	  echo moving "$f" to "$new"
+	  mv "$f" "$new"
+	fi
+      fi
+    fi
+  done
+  cd $curDir
+done

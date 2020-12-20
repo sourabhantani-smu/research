@@ -48,6 +48,7 @@ def convertToEpsilonNeighborhoodGraphByPercentile(oldW, epsilon):
         for j in range(i,n):
             weights.append(oldW[i,j])
     cutoff = sp.quantile(weights,epsilon)
+    print("Cutoff: ",cutoff)
     return convertToEpsilonNeighborhoodGraphByValue(oldW, cutoff)
     
 def convertToEpsilonNeighborhoodGraphByValue(oldW, epsilon):

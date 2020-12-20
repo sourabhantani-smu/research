@@ -5,12 +5,12 @@
 \usepackage{blindtext}
 \usepackage{amsmath}
 \usepackage{amsfonts}
-\usepackage{amssymb}
+\usepackage{amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{parskip}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
-
+\usepackage{enumerate,url}
 \usepackage{etoolbox}
 \makeatletter
 \patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
@@ -38,11 +38,13 @@
 
 \begin{document}
 	\maketitle
+
+	
 	\chapter{Introduction}
 	\thispagestyle{fancy}
-	This is a paper report on the paper 'A tutorial on spectral clustering' by Ulrike von Luxburg \cite{MainPaper}. All the sections in this report are taken or paraphrased from \cite{MainPaper} and not original work. The python code in the github repository\cite{github-repo} is based on the algorithms stated and described in the paper \cite{MainPaper}.
+	This is a paper report on the paper 'A tutorial on spectral clustering' by Ulrike von Luxburg \cite{Luxburg2007}. All the sections in this report are taken or paraphrased from \cite{Luxburg2007} and not original work. The python code in the github repository at https://github.com/sourabhantani-smu/research is based on the algorithms stated and described in the paper \cite{Luxburg2007}.
 	
-	This tutorial is setup up as self-contained introduction to spectral clustering. It derives spectral clustering from scratch and present different points of view to why spectral clustering works. 
+	This tutorial is setup up as self-contained introduction to spectral clustering. It derives spectral clustering from scratch and present different points of view to why spectral clustering works. After describing the some of the basic terms in the in beginning of the paper, the authors describe the 3 classic algorithms for unnormalized and normalized spectral clustering. After describing the algorithms and the results on a simple test problem, the authors dive deeper to derive the three algorithms and provide the intuition behind each as applicable to graph with connected components. Later, the authors describe why the same technique would work even if the entire graph is connected. Finally the authors present some challenges that one may face while applying the algorithms, and how to choose the correct algorithm and parameters their of.
 	
 	\chapter{Similarity graphs}
 	\thispagestyle{fancy}
@@ -199,7 +201,7 @@
 	$$
 	Thus the goal is to find such a vector $f$ that minimizes $f'Lf$ under the conditions $f \perp \mathbf{1}$ and $\norm{f} = \sqrt{n}$. Here $n$ is the total number of vertices in the graph, hence is a constant in this equation. This means that the vector $f$ that minimizes $f'Lf$ will also minimize $\frac{f'Lf}{n} = \frac{f'Lf}{\norm{f'f}} $. \\
 	
-	Rayleigh-Ritz (\cite{rayleigh-ritz}) theorem states that
+	Rayleigh-Ritz (\cite{lutkepohl:97}) theorem states that
 	\begin{quote}
 		Let $A \in \mathbb{C}$ be a Hermitian Matrix, and 'Rayleigh quotient' be the function defined as $$R: \mathbb{C}^{n} \backslash \{\mathbf{0}\}\to \mathbb{R}, 
 	 R(x) = \frac{x^{H}Ax}{x^{H}x}, \norm{x}\neq 0 $$ then the eigenvectors of $A$ are the critical points of $R(x)$ and eigenvalues of $A$ are the values of $R(x)$ at those critical points. 
@@ -226,7 +228,7 @@
 	Thus,
 	$$ RatioCut(A_{1},\dots,A_{k}) = \sum_{i=1}^{k}h_{i}'Lh_{i} = \sum_{i=1}^{k}(H'LH)_{i} = Trace(H'LH)$$
 	
-	Hence the goal of clustering would be minimize Trace of $H'LH$ with $H$ orthonormal as defined above. Again, a version of Rayleigh-Ritz theorem (\cite{rayleigh-ritz-trace-min}) states that this is achieved by taking the first $k$ eigenvectors of $L$ corresponding to the $k$ smallest eigenvalues. Note that H is the same as matrix $U$ in unnormalized spectral clustering mentioned in chapter 4. Again converting this to the discretion partition, we get the unnormalized spectral clustering algorithm mentioned in chapter 4. 
+	Hence the goal of clustering would be minimize Trace of $H'LH$ with $H$ orthonormal as defined above. Again, a version of Rayleigh-Ritz theorem (\cite{lutkepohl:97}) states that this is achieved by taking the first $k$ eigenvectors of $L$ corresponding to the $k$ smallest eigenvalues. Note that H is the same as matrix $U$ in unnormalized spectral clustering mentioned in chapter 4. Again converting this to the discretion partition, we get the unnormalized spectral clustering algorithm mentioned in chapter 4. 
 	
 	\section{Approximating Ncut}
 	Similar to RatioCut, for $k=2$ we define cluster indicator vector $f$ by $$ f_{i} = \begin{cases}
@@ -299,7 +301,7 @@
 	\begin{theorem} (Davis-Kahan) Let $A$, $H\in\mathbb{R}^{n\times n}$ be symmetric matrices, and let $\norm{\cdot}$ be the Frobenius norm or the two norm of matrices, respectively. Consider $\tilde{A} = A+H$ as a perturbed version of $S$. Let $S_{1} \subset \mathbb{R}$ be an interval. Denote by $\sigma_{S_{1}}(A)$ the set of eigenvalues of $A$ which are contained in $S_{1}$ and by $V_{1}$ the eigenspace corresponding to all those eigenvalues. Denote by $\sigma_{S_{1}}(\tilde{A})$ and $\tilde{V}_{1}$ the analogous quantities for $\tilde{A}$. Define the distance between $S_{1}$ and the spectrum of $A$ outside of $S_{1}$ as $$\delta = min(\abs{\lambda - s}); \lambda\text{ eigenvalue of }A, \lambda\notin S_{1}, s\in S_{1}$$ Then the distance $d(V_{1},\tilde{V}_{1}) =\norm{\sin \Theta(V_{1},\tilde{V}_{1})} $ between two subspaces $V_{1}$ and $\tilde{V}_{1}$ is bounded by $$ d(V_{1},\tilde{V}_{1}) \le \frac{\norm{H}}{\delta} $$
 	\end{theorem}
 
-	The author points to Section V.3 of Stewart and Sun (1990)\cite{stewart-sun-1990}. To understand what the theorem means to spectral clustering, Let $A$ be the graph Laplacian $L$ of the ideal case where graph has $k$ connected components and $\tilde{A}$ be the perturbed case where the $k$ compnents are no longer completely disconnected but are connected by a few edges with low weight. Let the graph Laplacian of the 'lightly connected' case be $\tilde{L}$. Let $\lambda_{1},\dots,\lambda_{n}$ and $\tilde{\lambda}_{1},\dots,\tilde{\lambda}_{n}$ be the eigenvalues of $L$ and $\tilde{L}$ respectively. We have to choose $S_{1}$ such that $\lambda_{1},\dots,\lambda_{k}$ and $\tilde{\lambda}_{1},\dots,\tilde{\lambda}_{k}$ are contained in $S_{1}$. This is easier when $H=L-\tilde{L}$ is small and $\abs{\lambda_{k} - \lambda_{k+1}}$ is large. If we can find such a set (interval) $S_{1}$, the Davis-Kahan theorem states that the distance between the eigenspaces of the first $k$ eigenvectors of $L$ and $\tilde{L}$ would be bounded by $\norm{H}/\delta$. Hence even for $\tilde{L}$, the spectral clustering using first $k$ eigenvectors will find appropriate $k$ clusters. How 'appropriate' the clustering is depends upon how large $\abs{\lambda_{k}-\lambda_{k+1}}$ is. 
+	The author points to Section V.3 of Stewart and Sun (1990)\cite{stsu:90}. To understand what the theorem means to spectral clustering, Let $A$ be the graph Laplacian $L$ of the ideal case where graph has $k$ connected components and $\tilde{A}$ be the perturbed case where the $k$ compnents are no longer completely disconnected but are connected by a few edges with low weight. Let the graph Laplacian of the 'lightly connected' case be $\tilde{L}$. Let $\lambda_{1},\dots,\lambda_{n}$ and $\tilde{\lambda}_{1},\dots,\tilde{\lambda}_{n}$ be the eigenvalues of $L$ and $\tilde{L}$ respectively. We have to choose $S_{1}$ such that $\lambda_{1},\dots,\lambda_{k}$ and $\tilde{\lambda}_{1},\dots,\tilde{\lambda}_{k}$ are contained in $S_{1}$. This is easier when $H=L-\tilde{L}$ is small and $\abs{\lambda_{k} - \lambda_{k+1}}$ is large. If we can find such a set (interval) $S_{1}$, the Davis-Kahan theorem states that the distance between the eigenspaces of the first $k$ eigenvectors of $L$ and $\tilde{L}$ would be bounded by $\norm{H}/\delta$. Hence even for $\tilde{L}$, the spectral clustering using first $k$ eigenvectors will find appropriate $k$ clusters. How 'appropriate' the clustering is depends upon how large $\abs{\lambda_{k}-\lambda_{k+1}}$ is. 
 	
 	It is worth noting that if $\norm{H}$, which corresponds to the noise or inter-cluster similarity in the graph, is large we may not be able to find $S_{1}$ that has $k$ eigenvalues both of $L$ and $\tilde{V}$. In this case, the algorithm may end up using few more or less than $k$ eigenvectors, $\tilde{k}$ then the ideal case, $k$ and result in lower quality of clustering. The same may happen if the eigenvalues $\lambda_{k}$ and $\lambda_{k+1}$ are close to each other.
 	
@@ -395,18 +397,10 @@
 	 This relation has been studied and shown to be precise. Apart from the application to partitioning problem,s graph Laplacians have been also studied and used for the connection between topology and properties of graphs and graph Laplacians.
 	
 	
+	\nocite{govl:96, parlet:98,stsu:90,gene:2018}
 	
 	\thispagestyle{fancy}
-	\begin{thebibliography}{9}
-	\thispagestyle{fancy}
-		\bibitem{MainPaper}
-		\bibitem{Dr.zhou - Notes} need to add citation for lecture slides by Dr. Zhou for Rayleigh quotient 
-		\bibitem{github-repo}github repository with implemented algorithms. 
-		\bibitem{gene_cheung} 
-		Cheung, Gene, Magli, Enrico, Tanaka, Yuichi, Ng, Michael K. "Graph Spectral Image Processing". Proceedings of the IEEE, vol 106, No. 5, pp. 907-930 May 2018
-		\bibitem{rayleigh-ritz} https://planetmath.org/RayleighRitzTheorem
-		\bibitem{rayleigh-ritz-trace-min} http://people.inf.ethz.ch/arbenz/ewp/Lnotes/chapter13.pdf
-		\bibitem{stewart-sun-1990}Stewart and Sun (1990) 
-
-	\end{thebibliography}
+	\bibliographystyle{unsrt}
+	\bibliography{long_string, Mybib} 
+	
 \end{document}
