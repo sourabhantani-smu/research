@@ -1,0 +1,7 @@
+Reports/tex/*.aux
+Reports/tex/*.blg
+Reports/tex/*.fdb_latexmk
+Reports/tex/*.bbl
+Reports/tex/*.fls
+Reports/tex/*.log
+Reports/tex/*.synctex.gz
