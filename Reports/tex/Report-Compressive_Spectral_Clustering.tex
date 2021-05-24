@@ -1,4 +1,4 @@
-\documentclass[10pt,a4paper, nocenter]{report}
+\documentclass[10pt,a4paper,twoside]{report}
 \usepackage[scaled=0.92]{helvet}
 \usepackage[margin=1in]{geometry}
 \usepackage[latin1]{inputenc}
@@ -35,9 +35,16 @@
 
 
 \pagestyle{fancy}
-\lhead{[WORK IN PROGRESS] \\ Report on Paper "Compressive Spectral Clustering" \\by Tremblay, Puy, Gribnoval, Vandergheynst}
+\lhead{[WORK IN PROGRESS] Report on Paper "Compressive Spectral Clustering" \\by Tremblay, Puy, Gribnoval, Vandergheynst}
 \rhead{Sourabh Antani}
 \cfoot{\thepage\ of \pageref{LastPage}}
+
+\fancypagestyle{plain}{%
+\lhead{[WORK IN PROGRESS] Report on Paper "Compressive Spectral Clustering" \\by Tremblay, Puy, Gribnoval, Vandergheynst}
+\rhead{Sourabh Antani}
+\cfoot{\thepage\ of \pageref{LastPage}}
+}
+
 \renewcommand{\footrulewidth}{0.4pt}
 
 
@@ -48,22 +55,21 @@
 \begin{document}
 	\maketitle
 
-	
-	\chapter{Introduction}
 	\thispagestyle{fancy}
+	\chapter{Introduction}
 	This is a paper report on the paper 'Compressive Spectral Clustering' by by Nicolas Tremblay, Gilles Puy, R\'{e}mi Gribnoval and Pierre Vandergheynst \cite{tremblay-compressive-SC-16}. All the sections in this report are taken or paraphrased from \cite{tremblay-compressive-SC-16} and not original work. The structure of this report also follows the structure of the paper so that it is easy to follow.
 
 	According to the authors, Spectral Clustering has three computational bottlenecks when $N$ and/or $k$ is large: Creation of the similarity matrix $W$, partial eigendecomposition of $L$ and $k$-means.
 	
 	In order to circumvent these, sevaral authors have published various ideas. Following are few examples:
 	\begin{description}
-		\item[Power method] [Boutsidis and Gittens, 2015], [Lin and Cohen,  2010]
-		\item[A  careful  optimisation  of  diagonalisation  algorithms  in  the  context  of  SC]  [Liu  et  al.,  2007]
-		\item[Matrix column-subsampling such as in the Nystr\"{o}m method]  (Fowlkes  et  al.,  2004)
-		\item[nSPEC  and  cSPEC methods] (Wang et al., 2009), or in (Chen and Cai, 2011;Sakai and Imiya, 2009)
-		\item[Reduce $k$-means complexity] Jain, 2010
-		\item[Line of work on coresets] (Har-Peled and Maxmudar, 2004)
-		\item[Reduction of Graph by successive aggregation of nodes] (Dhillon et al. 2007) (Filippone et al., 2008)
+		\item[Power method] \cite{pmlr-v37-boutsidis15},  \cite{pic-icml10}
+		\item[A  careful  optimisation  of  diagonalisation  algorithms  in  the  context  of  SC]  \cite{liu-2007}
+		\item[Matrix column-subsampling such as in the Nystr\"{o}m method]  \cite{Fowlkes-2004}
+		\item[nSPEC  and  cSPEC methods] \cite{wang-2009}, or in \cite{chen-2011} or \cite{sakai-2009}
+		\item[Reduce $k$-means complexity] \cite{jain-2010}
+		\item[Line of work on coresets] \cite{har-peled-2004}
+		\item[Reduction of Graph by successive aggregation of nodes] \cite{dhillon-2007} \cite{filippone-2008}
 	\end{description}
 	
 	Compressive clustering circumvents two last bottlenecks using $\mathcal{O}(\log(k))$ randomly fitered signals on the graph to serve as feature vectors instead of eigenvectors and by clustering random subset of $\mathcal{O}(k\log(k))$ nodes using random feature vectors and infering the cluster label of all $N$ nodes. Thus, the complexity of $k$-means is reduced from $\mathcal{O}(Nk^{2})$ to $\mathcal{O}(k^2\log^2(k))$
@@ -87,26 +93,103 @@
 		Given a graph $\mathcal{G}$, the local cumulative coherence of order $k$ at node $i$ is $v_k(i) = \lvert \lvert U_k^T\delta_i\rvert \rvert = \sqrt{\sum_{=1}^k U_{ij}^2}$, i.e. $\ell_2$-norm of $i{th}$ row of $U$
 	\end{definition}
 
-	Next, the authors define the diagonal matrix $V_k$ such that $V_k(i,i) = 1/v_k(i)$, assuming $v_k > 0$. Consider matrix $R = (r_1|r_2|\cdots|r_d) \in \mathbb{R}^{N\times d}$ consisting of $d$ random signals $r_i$ whose components are independent, Bernouilli, Gaussian or sparse random variables with mean zero and variance $1/d$. Considering the coherence=normalized filtered version of $R$, $V_kH_{\lambda_k}, R \in \mathbb{R}^{N\times d}$, and define node $i$'s new feature vector $f_i \in \mathbb{R}^d$ as transposed $i$-th row of the filtered matrix, i.e. $\tilde{f_i} := (V_kH_{\lambda_k}, R)^T\delta_i$. The following theorem shows that, for a large enough d, $$\tilde{D_{ij}} := \norm{\tilde{f_i} - \tilde{f_j}} = \norm{(V_kH_{\lambda_k}, R)^T(\delta_i-\delta_j)}$$ is a good estimation of $D_{ij}$ with high probability.
+	Next, the authors define the diagonal matrix $V_k$ such that $V_k(i,i) = 1/v_k(i)$, assuming $v_k > 0$. Consider matrix $R = (r_1|r_2|\cdots|r_d) \in \mathbb{R}^{N\times d}$ consisting of $d$ random signals $r_i$ whose components are independent, Bernouilli, Gaussian or sparse random variables with mean zero and variance $1/d$. Considering the coherence=normalized filtered version of $R$, $V_kH_{\lambda_k}, R \in \mathbb{R}^{N\times d}$, and define node $i$'s new feature vector $f_i \in \mathbb{R}^d$ as transposed $i$-th row of the filtered matrix, i.e. $\tilde{f_i} := (V_kH_{\lambda_k}, R)^T\delta_i$. The following theorem shows that, for a large enough d, $$\tilde{D_{ij}} := \norm{\tilde{f_i} - \tilde{f_j}} = \norm{(V_kH_{\lambda_k}R)^T(\delta_i-\delta_j)}$$ is a good estimation of $D_{ij}$ with high probability.
 
 	\begin{theorem}
-		Let $\epsilon \in [0,1]$ and $\beta > 0$ be given. If $d$ larger than $$\frac{4+2\beta}{\epsilon^2/2 - \epsilon^3/3}\log N,$$ then with probability at least $1-N^{-\beta}$, we have $$(1-\epsilon)D_{ij} \le \tilde{D}_ij \le (1+\epsilon)D_{ij}, \forall (i,j) \in \{1,\dots,N\}^2 $$
+		Let $\epsilon \in (0,1]$ and $\beta > 0$ be given. If $d$ larger than $$\frac{4+2\beta}{\epsilon^2/2 - \epsilon^3/3}\log N,$$ then with probability at least $1-N^{-\beta}$, we have $$(1-\epsilon)D_{ij} \le \tilde{D}_ij \le (1+\epsilon)D_{ij}, \forall (i,j) \in \{1,\dots,N\}^2 $$
 	\end{theorem}
 	\begin{proof}
-		To be filled in.
+		$$ \tilde{D}_{ij} = \norm{\tilde{f_i} - \tilde{f_j}} = \norm{(V_kH_{\lambda_k}R)^T(\delta_i-\delta_j)} = \norm{R^TH_{\lambda_k}^T V_k^T(\delta_i-\delta_j)} = \norm{R^T U_k U_k^T V_k^T(\delta_i-\delta_j)} $$ 
+		$$ = \norm{R^T U_k Y_k^T(\delta_i-\delta_j)} = \norm{R^T U_k (f_i-f_j)} \hspace{20pt}[\because H_{\lambda_k}=U_k U_k^T, Y_k = V_k U_k, Y_k^T \delta_i = f_i ]$$
+
+		Johnson-Linderstrauss Lemma essentially states that if we wish to construct a $d$-dimentional vector created from from $k$-dimensional vector by applying a linear transformation by a $d \times k$ matrix whose columns are randomly selected vectors from gaussian distribution, the probability of existance of such a matrix $R^T$ is greater than $0$ , i.e. it is always possible to find such a matrix. whose columns are elements from Gaussian distributions. [Achiloptas, 2003] gives a lower bound of $1-N^{-\beta}$ on probability of such existance if $d$ is largern than the quantity menioned above. 
+		
+		Hence  $$(1-\epsilon)\norm{U_k (f_i-f_j)} \le \tilde{D}_ij \le (1+\epsilon)\norm{ U_k (f_i-f_j)} $$
+
+		Since $U_k$ has orthonormal columns, left multiplication by $U_k$ does not change the norm, $\norm{U_k (f_i-f_j)} = \norm{(f_i-f_j)} = D_{ij}$. This proves the required result. 
 	\end{proof}
 
 	\section{Downsampling and interpolation}
 	Let $c_j \in \mathbb{R}^N, j=1,\dots,k$ be the indicator vectors of clusters $C_j$. The authors propose to estimate $c_j$ by running $k$-means on small subset of $n$ feature vectors only using 1) low-dimentional model that captures the regularity of $c_j$, 2) make sure enough information is preserved after sampling, 3) algorithem that rapidly and accuraely estimates the vectors $c_j$. 
 	\subsection{The Low-Dimentional Model}
-	For a simple regular graph (graph with nodes of same degree) with $k$ disconnected clusters, one can see that the indicator vectors ${c_i}$ form a set of $k$ orthogonal eigenvectors of $L$ with eigenvalue 0. Thus, al the indicator vectors live in $span(U_k)$. For general graph the authors assume that the indicator vectors live close to $span(U_k)$, i.e. there is a slight perturbation. In graph signal processing words, one can say that $c_j$ is approximately $k$-bandlimited. i.e. the first $k$ graph Fourier coefficients bear most of its energy. 
+	For a simple regular graph (graph with nodes of same degree) with $k$ disconnected clusters, one can see that the indicator vectors ${c_i}$ form a set of $k$ orthogonal eigenvectors of $L$ with eigenvalue 0. Thus, al the indicator vectors live in $span(U_k)$. For general graph the authors assume that the indicator vectors live close to $span(U_k)$, i.e. there is a slight perturbation. The perturbation therory argument made in \cite{Luxburg2007}, can be applied here and we can say that, previous result applies for general graph. In graph signal processing words, one can say that $c_j$ is approximately $k$-bandlimited. i.e. the first $k$ graph Fourier coefficients bear most of its energy. 
 	\subsection{Sampling and Interpolation}
+	Let the subset of feature vectors selected by drawing $n$ indices be $\Omega = \{\omega_1,\dots,\omega_n\}$. Running $k$-means on the subset of features $\{\tilde{f}_{\omega_1},\dots,\tilde{f}_{omega_n}\}$, thus yields a clustering of $n$ sampled nodes into $k$ clusters. Denote, by $c_j^r \in \mathbb{R}^n$, the low-dimentional indicator vectors. Our goal is to recover $c_j$ from $c_j^r$. 
+
+	Assuming that spectral clustering algorithm is able to correctly identify clusters $c_1,\dots,c_k \in \mathbb{R}^N$, results in [ramasamyandmadhow; tremblay et al, 2016] shows that $k$-means is also able to identify the clusters using feature vectors $\tilde{f_1},\dots,\tilde{f_N}$, since Theorem 1 showed that the distance between all pairs of feature vectors. Then $k$-means should be able to correctly cluster the $n$ sampled nodes, provided that each cluster has been sufficiently sampled. 
+
+	Ideally, since we simply selected $n$ nodes, $c_j^r = Mc_j$ where $M$ is matrix containing sampling selection. Then according to [Puy 2015] $$ \min_{x\in \mathbb{R}^N}\norm{Mx-c_j^r}_2^2 + \gamma x^Tg(L)x$$ is a faithful estimation of $c_j$ as long as $c_j$ is close to $span(U_k)$ and $M$ satisfies restricted isometry (discussed later). Here $\gamma > 0$ is a regularization parameter and $g$ is polynomial function.
+
+	\subsection{How many features to sample?}
+	\begin{definition}[Global cumulative coherence] of order $k$ of graph $\mathcal{G}$ is $\nu_k = \sqrt{N}\cdot \max_{1\le i \le N}\{v_k(i)\}$. It is shown by [puy 2015] that $\nu_k \in [\sqrt{k}, \sqrt{N}]$\end{definition}
+
+	\begin{theorem}
+		Let $M$ be a random sampliing matrix. For any $\delta, \epsilon \in (0,1)$, $$(1-\delta)\norm{x}_2^2 \le \frac{N}{n}\norm{Mx}_2^2\le(1+\delta)\norm{x}_2^2 \forall x \in span(U_k)$$ (this is called restricted isometry property) with probability at least $1-\epsilon$ provided $$ n\ge \frac{6}{\delta^2}\nu_k^2 log\bigg(\frac{k}{\epsilon}\bigg) $$
+	\end{theorem}
+	\begin{proof}
+		The proof for this theorem is simply application of Johnson-Linterstrauss lemma and noting that columns of $M$ are orthogonal and scaling by $N/n$ provides the normalization needed with the fact that norm is invariant under product with unitary matrix. 
+	\end{proof}
+
+	The above theorem suggests that sampling $\mathcal{O}(\nu_k^2\log(k))$ is sufficient.
+
+	\chapter{CSC in practice}
+	\section{The CSC Algorithm}
 	
+	Input: Laplacian Matrix $L$, number of clusters $k$, parameters (typically set to ) $n=2k \log k, d=4\log n, p=50,\gamma=10^{-3}$.
+	\begin{itemize}
+		\item Estimate $L$'s $k$-th eigenvalue $\lambda_k$ as in Section 4.3
+		\item Compute the polynomial approximation $\tilde{h_{\lambda_k}}$ of order $p$ of the ideal low-pass filter $j_{\lambda_k}$
+		\item Generate $d$ random Gaussian signals of mean 0 and variance $1/d$ $R=(r_1\lvert r_2\lvert \cdots \lvert r_d) \in \mathbb{R}^{N \times d}$
+		\item Filter $R$ with $\tilde{H}_{\lambda_k} = h_{\lambda_k}(L)$ and define, for each node $i$, its feature vector $\tilde{f}_i \in \mathbb{R}^d$ $$ \tilde{f}_i = \bigg[ \bigg( \tilde{H}_{\lambda_k}R \bigg)^T \delta_i \bigg]  \bigg/ \biggl|\biggl| \bigg( \tilde{H}_{\lambda_k}R \bigg)^T \delta_i\biggr|\biggr| $$
+		\item Generate a random sampling matrix $M \in \mathbb{R}^{n \times N}$ and keep only $n$ feature vectors: $(\tilde{f}_{\omega_1}|\cdots|\tilde{f}_{\omega_n})^T = M(\tilde{f}_{1}|\cdots|\tilde{f}_{n})^T$
+		\item Run $k$-means on the reduced dataset with the euclidian distance $\tilde{D}_{ij}^r = \norm{\tilde{f}_{\omega_i}-\tilde{f}_{\omega_j}}$ to obtain $k$ reduced indicator vectors $c_j^r \in \mathbb{R}^n$, one for each cluster
+		\item Interpolate each reduced indicator vector $c_j^r$ with the optimisation problem stated in section above, to obtain the vectors $\tilde{c}_j^* \in \mathbb{R}^N$ 
+	\end{itemize}
+	
+	NOTE 1: $\tilde{c}_j^*$ is not binary and quatifies how much the node $i$ belongs to cluster $j$. This can be treated as fuzzy partitioning or as a probability score. the node $i$ is assigned to cluster $j$ for which $\tilde{c}_j^*(i)/\norm{\tilde{c}_j^*}$ is maximal.
+
+	NOTE 2: In step 4, the normalization as applied may not be intuitive. The feature matrix required is $V_k\tilde{H}_{lambda_k}R$. This requirs knowledge of $\lambda_k$ and $v_k(i)$, which are not known in practice. Authors estimate $k^{th}$ eigenvalue $\lambda_k$ in section 4.3. To estimate $v_k(i)$ one can use the results of section 4 of [Puy 2015] showing $v_k(i) \approx \norm{U_k^T\delta_i} \approx \norm{(H_{\lambda_k}R)^T\delta_i}$. Thus, practical way is to compute $\tilde{H}_{\lambda_k}R$ and normalize its rows to unit length as in step 4.
+
+	\section{Non-ideal filtering of random signals}
+	In this section, the authors study the effect of the error of polynomial approximation ($\tilde{h_{\lambda_k}}$) of the filter $h_{\lambda_k}$ on the spectral distance estimation and by applying $k$-means on a reduced set of features. Let $MY_k \in \mathbb{R}^{n\times k}$ be the ideal reduced feature matrix. The distances we want to measure are, $D_{ij}^r := \norm{f_{\omega_i} - f_{\omega_j}} = \norm{Y_k^T M^T (\delta_i^r-\delta_j^r)}$ where $\{\delta_i^r\}$ are the Direacs in $n$ dimensions. 
+
+	Let $R \in \mathbb{R}^{N\times d}$ be constructed as in Section 3.1. Its filtered, normalized, reduced version is $MV_k \tilde{H}_{\lambda_k} \in \mathbb{R}^{n\times d}$. 
+	Thus, the new filtered, normalized and reduced feature vector associated to node $\omega_i$ is $\tilde{f}_{omega_i} = (MV_k\tilde{H}_{\lambda_k}R)^T\delta_i^r$, and the distance between two such features is $$ \tilde{D}_{ij}^r := \norm{R^T\tilde{H}_{\lambda_k}^TV_k^TM^T(\delta_i^r-\delta_j^r)} $$
+	
+	\textbf{Approximation Error:} Denote by $e(\lambda)$, the approximation error of ideal low-pass filter: $\forall\lambda \in [0,2], e(\lambda) := \tilde{h}_{\lambda_k}(\lambda) - h_{\lambda_k}(\lambda)$. Thus $\tilde{h}_{\lambda_k}(L) = \tilde{H}_{\lambda_k}(L) = h_{\lambda_k}(\lambda) + e(L)$. Let the error be modelled using two parameters $e_1 := \sup_{\lambda \in {\lambda_1,\dots,\lambda_k}}\abs{e(\lambda)}$ and $e_2 := \sup_{\lambda \in {\lambda_{k+1},\dots,\lambda_N}}\abs{e(\lambda)}$.
+	
+	Note that non-ideal filter is not possible to guarantee approximation of cases where ideal distance is $D_{ij}^r=0$ since the sampling would break the equality of the features. Hence the authors introduce a tolerence (or resolution) parameter $D_{min}^r$ as the maximum allowable ideal distance that does not need to be approximated exactly. 
+
+	\begin{theorem}{Genreal norm conservation theroem}. Let $D_{min}^r \in (0,\sqrt{2}]$ be a chosen resolution parameter. 
+		For any $\delta \in (0,1], \beta>0$ if $d$ is larger than $\frac{16(2+\beta)}{\delta^2-\delta^3/3}\log n$, then $\forall (i,j)\in \{1,\dots,n\}^2$, 
+		$$\begin{cases}(1 -\delta) \le \tilde D_{ij}^r \le (1 +\delta)D_{ij}^r, &D_{ij}^r \ge D_{min}^r \\ \tilde{D}_{ij}^r < (1+\delta)D_{ij}^r, &D_{ij}^r < D_{min}^r\end{cases}$$
+		with probability at least $1-2n^{-\beta}$ provided that $$ \sqrt{\abs{e_1^2 - e_2^2}} + \frac{\sqrt{2}e_2}{D_{min}^r \min_r\{v_k(i)\}} \le \frac{\delta}{2+\delta}$$		
+	\end{theorem}
+
+	\begin{proof}
+		TO BE FILLED IN.
+	\end{proof}
+
+	\textbf{Consequence}: All distance smaller (or larger) than chosen resolution parameter $D_{min}^R$ are correctly estimated with relative error $\delta$. Moreover, to keep error $\delta$ fixed, lower telerence $D_{min}^r$ would mean lower $e_1$ \& $e_2$, which means higher order polynomial is required for approximation of ideal filter $h_{\lambda_k}$. Thus increase in computation is the result. 
+
+	\section{Polynomial approximation of $\lambda_k$}
+	To simply the analysis, the authors use $e_m = max(e_1, e_2)$ as maximal error such that theorem 4.1 still applies with last inquality replaced by $$ \frac{\sqrt{2}e_m}{D_{min}^r \min_r\{v_k(i)\}} \le \frac{\delta}{2+\delta} $$. 
+	The authors further suggest use of Jackson-Chebychev polynomials, which adds a damping multipliers to Chebychev polynomials and alleviate Gibbs ossillations around cutoff frequency $\lambda_k$. Experimentally, $p=50$ yields good results. 
+	
+	\textbf{Estimating $\lambda_k$}. For fast filtering step, the $\lambda_k$ is the parameter required for low pass filter $h_{\lambda_k}$. The authors suggest use of eigencount techniques [Napoli 2013], based on low-pass filtering with cut-off frequency $\lambda$ of random signals, one obtains estimation of number of enclosed eigenvalues in $[0,\lambda]$. Starting with $\lambda=2$ and proceeding by dichotomy on $\lambda$, one stops the algorithm as soon as number of enclosed eigenvalues equals $k$. $2\log N$ random signals with Jackson-Chebychev polynomial approximation of ideal low-pass filters are used for each $\lambda$. 
+
+	\section{Complexity}
+	The fast filtering of graph signal costs $\mathcal{O}(p\#\mathcal{E})$, where $\#\mathcal{E}$ is number of edges. Hence Step 1 costs $\mathcal{O}(p\#\mathcal{E}\log n)$. Step 4 costs $\mathcal{O}(p\#\mathcal{E}\log n)$. Step 7 costs, for each of the $k$ iterations, one fast filtering operation, i.e. total of $\mathcal{O}(p\#\mathcal{E}k)$. $k$-means would cost $\mathcal{O}(kn \log n)$ since there are $n$ clusters and vectors are in $\log n$ dimensions. Finally, setting $n=\mathcal{O}(k \log k)$, CSC's complexity simplifies to $\mathcal{O}(k^2\log^2k+pN(\log N +k))$. 
+
+	On the otherhand, Spectral Clustering has $k$-means complexity of $\mathcal{O}(Nk^2)$, and $k$ eigenvector calculation complexity of $\mathcal{O}(k^3 + NK^2)$ (cost of ARPACK). This suggests that CSC is faster than SC for large $N$ and/or $k$.
+
+	\chapter{Experiments \& Conclusion}
+	At the end the authors provide the experimental results on Stochastic Block Model and Amazon co-purchasing graph to show that the CSC algorithm is able to successfully extract the clusters in synthetically generated and real world data. They do mention that in stochastic block model, the ratio of probabilities of edge between two nodes based on them being in same/different clusters does affect the performance of algorithm. This is a known factor that determines if the clusters are detectable or not \cite{decelle-2011}.
 
 	\thispagestyle{fancy}
 	\bibliographystyle{unsrt}
 	\bibliography{long_string, Mybib} 
 
-	\nocite{Luxburg2007, govl:96, parlet:98, stsu:90, gene:2018}
+	\nocite{govl:96, parlet:98, stsu:90, gene:2018}
 
 \end{document}
