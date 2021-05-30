@@ -75,16 +75,17 @@
         A subset $A \subset V$ of a graph is connected if any two vertices in $A$ can be joined by a path such that all intermediate points also line in $A$. $A$ is called Connected Component if it is a connected subset such that $A$ and $\bar{A}$ are disjoint. FInally, Partitions of a graph are defined as non-empty sets $A_{1},\dots,A_{k}$ form partition of graph inf $A_{i} \cap A_{j} = \emptyset$ and $A_{1}\cup \dots \cup A_{k} = V$
 
     \section{Graph Laplacians and Graph cuts}
-
+    \subsection{Graph Laplacians}
         The following types of graph Laplacians have been defined in the literature:
         \begin{align*}
          \textbf{Unnormalized Graph Laplacian: } &L = D- W \\
          \textbf{Normalized Graph Laplacian (Symmetric): } &L_{sym} = D^{-1/2}LD^{-1/2} = I - D^{-1/2}WD^{-1/2} \\
-         \textbf{Unnormalized Graph Laplacian (Raondom walk): } &L = D^{-1}L = I - D^{-1}W 
+         \textbf{Normalized Graph Laplacian (Raondom walk): } &L = D^{-1}L = I - D^{-1}W 
         \end{align*}
 
-        All three graph Laplacians are positive-semidifinte and have non-negative real valued eigen values. Also, 0 is an eigenvalue with multiplicity equal to number of connected components of the graph. Thus for fully connected graph one of the eigenvalues is 0. $L$ and $L_{sym}$ are symmetric. The eigenvectors of $L_{rw}$ are the eigen vectors of $L$ while $D^{1/2}u$ is eigenvector of $L_{sym}$ if $u$ is eigenvector of $L$. For proofs of the above properties, refer to the appendix. For information about unnormalized graph Laplacian, refer \cite{mohar-1991} and \cite{mohar-1997} while the standard reference for normalized graph Laplacian is \cite{graph-spectral-book}
+        All three graph Laplacians are positive-semidifinte and have non-negative real valued eigen values. Also, 0 is an eigenvalue with multiplicity equal to number of connected components of the graph. Thus for fully connected graph one of the eigenvalues is 0. $L$ and $L_{sym}$ are symmetric. The eigenvectors of $L_{rw}$ are the eigen vectors of $L$ while $D^{1/2}u$ is eigenvector of $L_{sym}$ if $u$ is eigenvector of $L$. For proofs of the above properties, refer to the appendix. As far as naming goes, $L_{sym}$ follows from its structure. While $L_{rw}$ is named because its structure is derived from the point of view of random walk on the graph. Taking $p_j = w_{ij}/d_i$ the probability of an edge between $v_i$ and $v_j$ being selected for random walk, the transition matrix for the random walk is defined by $P = D^{-1}W$. Thus $L_{rw} = I-P$. This is why the second form of nomalized graph Laplacian is denoted by $L_{rw}$. For information about unnormalized graph Laplacian, refer \cite{mohar-1991} and \cite{mohar-1997} while the standard reference for normalized graph Laplacian is \cite{graph-spectral-book}. A formal equivalence between Ncut and transition probability of the random walk has been outlined in \cite{Meila01arandom}
 
+    \subsection{Graph Cuts}
         The intuition of clustering is to divide the graph in to groups of vertices such that he edges between the vertices in the same group have high weight and the edges between vertices from different groups have zero or very low weight. Thus effective clustering is to solve the minicut problem which can be defined as, for a given number $k$ subsets, choosing the a partition $A_{1}, \dots, A_{k}$ which minimizes $$ \text{cut}(A_{1}, \dots, A_{k}) := \frac{1}{2}\sum_{i-1}^{k}W(A_i,\bar{A}_{i}) $$
 
         In order to make sure that minicut does not simply spearate an individual vertex, two approaches have been suggested to make sure that the clusters are 'reasonably large'. 
@@ -100,6 +101,9 @@
         \end{align*}
     
         While the introduction of these balancing condition makes the mincut problem NP hard, relaxing these conditions slightly leads Ncut and RatioCut to normalized and unnormalized spectral clustering respectively \cite{Luxburg2007}
+
+    \subsection{Perturbation theory point of view}
+        Perturbation theory states that the eigenvalues and eigenvectors of a matrix $A$ and a perturbed matrix $A+H$ is bounded by a constant times the norm of $H$. To apply this to spectral clustering, consider the ideal case where the graph is composed by $k$  connected components. In this case, the first $k$ eigenvalues will be 0 and corresponding eigenvectors will be the indicator vector of the cluster, where exactly one entry (corresponding to the cluster) will be 1 and rest will be 0. In this case, $k$-means will trivially converge to the indicator vectors and clustering will be ideal. With a small perturbation, the eigenvectors will also be slightly perturbed but $k$-means should still converge to the correct centroids. However, if the noise or perturbation is large, or the non=zero eigenvalues are very close to 0 or eigengap is very small, thus producing eigenvectors whose original values are very close to 0, the perturbation may be large enough for $k$-means to predictably converge to the correct centroids. The problem mentioned in the last section is not common for $L$ or $L_{rw}$ but for $L_{sym}$ the eigenvectors are already left multiplied by $D^{1/2}$ and can cause trouble. Hence the third algorithm below \cite{ng-jordan-01} needs an extra normalization step. 
 
     \section{Algorithms}
 
@@ -168,7 +172,7 @@
         This data set consists of 1351 points in $\mathbb{R}^2$ distributed in 9 clusters with one outlier. The figure below shows the clustering in 5, 8 and 10 clusters. This example shows that even though in theory, both Ncut and RatioCut try to keep the clusters reasonably large, that if a single oulier point, if sufficiently separaed from the rest, is clustered independently. The reason for this is that rest of the clusters are very tightly organized. The similarity function used in this case was scaled euclidean distance. The clustering results in to 5, 8 and 10 clusters is shown in Figure \ref{fig:2dresults}
 
         \begin{figure}
-        \includegraphics[width=\textwidth]{../../1DCluster.jpg}
+        \includegraphics[width=\textwidth]{../../2DCluster.jpg}
         \caption{Clustering results for 200 points in $\mathbb{R}^1$}
         \label{fig:2dresults}
         \end{figure}
@@ -196,9 +200,26 @@
 
     Finally, the $k$-means step itself can be expensive and in some cases, may not lead to ideal results based on the inital guess and/or the distribution of datapoints. Several attempts have been made to use other techniques of clustering. In \cite{Bottou95convergenceproperties}, the authors show that $k$-means is efficiant and minimizes the quantization error, thus highlight the reasons why $k$-means has become the choice for clustering applications. 
     
-    In \cite{tremblay-compressive-SC-16}, the authors propose an algorithm to sample $\mathcal{O}(\log(k))$ randomly fitered signals on the graph to serve as feature vectors instead of eigenvectors and by clustering random subset of $\mathcal{O}(k\log(k))$ nodes using random feature vectors and infering the cluster label of all $N$ nodes. This algorithm speeds up the clustering process by reducing the dimentionality and hence, the size of the problem.
+    \section{Compressive Spectral Clustering}
+    In Compressive Spectral Clustering \cite{tremblay-compressive-SC-16}, the authors propose an algorithm to sample $\mathcal{O}(\log(k))$ randomly fitered signals on the graph to serve as feature vectors instead of eigenvectors and by clustering random subset of $\mathcal{O}(k\log(k))$ nodes using random feature vectors and infering the cluster label of all $N$ nodes. This algorithm speeds up the clustering process by reducing the dimentionality and hence, the size of the problem.
 
-    \section{Optimizations}
+    As discussed above, for a graph with $k$ connected components, 0 is eigenvalue with multiplicity $k$ and the corresponding eigenvectors would be the indicator vectors of the clusters, which would be orthogonal. Thus, the indicator vectors belong to $span{U_k}$. Perturbation theory says that a for the general graph with slight perturbation to ideal case, the first $k$ eigenvectors still belong to $span{U_k}$. Thus it should be possible to sample a smaller number of features and still have $k$-means identify the $k$ clusters correctly. 
+
+    The altgorithm for compressive spectral clustering is, however quite involved and is outlined briefly below. 
+
+    \begin{itemize}
+        \item First, to get the first $k$ eigenvectors,  
+            \subitem Estimate the $k^{th}$ eigenvalue using eigen counting techniques detailed in \cite{Di13efficientestimation} 
+            \subitem Build polynomial estimation of the low-pass filter $H := h(L) = U h(\Lambda) U^T$ where $h({\Lambda})$ is the diagonal matrix with 1 on primary diagonal for the first $k$ rows/columns and 0 otherwise. $U$ here is the matrix is the eigenvectors of $L$. However, $L$ is not diagnolized, instead the lowpass filter $Hx$ is approximated as $\sum_{l=0}^{p}\alpha_l L^{l}x$ by successive matrix-vector products with $L$.
+        \item  Generate $d$ random Gaussian signals with mean $0$ and variance $1/d$, $R = (r_1|r_2|\dots|r_d) \in \mathbb{R}^{N\times d}$
+        \item Filter $R$ with $H$ and define for each node $i$, its feature vector $\bar{f}_i \in \mathbb{R}^d = \big[ (HR)^T \delta_i \big] / \norm{(HR)^T \delta_i} $
+        \item Generate random sampling matrix $M\in \mathbb{R}^{n\times N}$ to keep $n=2k \log{k}$ features. 
+        \item Run $k$-means on the reduced dataset with euclidean vector distance to obtain $k$ reduced indicator vectors, one for each cluster. 
+        \item Interpolate each reduced indicator vector to find the cluster assignment for each node on the graph.
+    \end{itemize}
+
+    \chapter{Future Work}
+    
 
     \appendix
     \chapter{Propositions related to Graph Laplacians}
