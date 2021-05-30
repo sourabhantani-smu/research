@@ -218,8 +218,11 @@
         \item Interpolate each reduced indicator vector to find the cluster assignment for each node on the graph.
     \end{itemize}
 
-    \chapter{Future Work}
-    
+    \chapter{Possible optimizations}
+    In practice quite frequently the number of cluster is not known. Hence a clustering method is repeatedly applied with increasing number of clusters until desired accuracy is reached. With spectral clustering, since the number of clusters depends on the number of eigenvectors used, the information from a prior step may be used in ths subsequent step to avoid redundant work. For example, since the first $k$ eigenvectors and hence, eigenvalues are, known, the next eigenvalue may be found by using shift inverse power iteration. 
+
+    Another possibility is to use Krylov subspace based methods. Although I do not have a clear path, Krylov space methods are attractive possibility for two reasons, one is that adding dimentions, i.e. subsequent basis vectors is simply matrix-vector product and second reason is that $L$ and $L_{sym}$ are symmetric and thus will lead to Lanczos method and tridiagonal instead of Hessenberg matrix. It may be possible to achieve clustering using Krylov spbspace basis vectors instead of eigenvectors. 
+
 
     \appendix
     \chapter{Propositions related to Graph Laplacians}
