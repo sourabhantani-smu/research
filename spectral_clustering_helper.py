@@ -12,11 +12,16 @@ def plot_matrix(mat, title):
     plt.show()
 
 def plot_clusters(data, groups, title):
-    plt.figure(figsize=(12,12))
-    plt.scatter(data[:,0],data[:,1],c=groups, cmap='tab10')
+    plt.figure(figsize=(12,12))  
+    print(data.shape)
+    if len(data.shape) ==1 :
+        plt.scatter(range(1,len(data)+1),data,c=groups, cmap='tab10') 
+    else:
+        plt.scatter(data[:,0],data[:,1],c=groups, cmap='tab10')
     plt.title(title)
     plt.show()
     plt.close()
+
 
 
 def createMatrices(x_list, similarity):
@@ -35,9 +40,10 @@ def createMatrices(x_list, similarity):
                 W[j,i] = x
                 L[i,j] = -x
                 L[j,i] = -x
-                d += x
-        D[i,i] = d
-        L[i,i] = d
+                D[i,i] += x
+                D[j,j] += x
+                L[i,i] += x
+                L[j,j] += x
     return L,W,D
 
 
@@ -79,7 +85,7 @@ def convertToEpsilonNeighborhoodGraphByValue(oldW, epsilon):
 def plot_histo(x_list):
     plt.figure(figsize=(12,8))
     plt.hist(x_list, bins=100)
-    plt.title("Distribution of elements of array")
+    plt.title("Distribution of data")
     plt.xlabel("Value")
     plt.ylabel("Frequency")
     plt.show()

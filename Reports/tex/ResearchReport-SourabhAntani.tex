@@ -4,6 +4,7 @@
 \usepackage[latin1]{inputenc}
 \usepackage{blindtext}
 \usepackage{amsmath}
+\usepackage{appendix}
 \usepackage{amsfonts}
 \usepackage{amssymb,amsthm}
 \usepackage{graphicx}
@@ -47,8 +48,8 @@
 	
     In this report, I will list some of the commonly used clustering techniques before diving deeper into Spectral Clustring. Thereafter we will look at some of the common challanges with spectral clustering and some of the existing advancements that have been proposed to alleviate them. Finally I will list some of the possible avenues of research that I wish to research. 
 
-    \section*{Non-Spectral Clustering Algorithms}
-    In practice various types of clustering algorighms are used, ranging from the ones based on spacial distribution to matrix factorization to eigen-value based methods. 
+    \section*{Clustering Algorithms}
+    In practice, apart from Spectral Clustering, various types of clustering algorighms are used, ranging from the ones based on spatial distribution to matrix factorization to eigen-value based methods. 
     
     Some common examples of algorighms that rely on euclidean distance and spacial density of points are $k$-means (term first used by J. Macqueen \cite{Macqueen67kmeans}, standard algorithm published by Lloyd \cite{Lloyd-82-kmeans}), which iteratively computes the controids of the clusters using euclidean distances, BIRCH (Balanced Iterative Reducing and Clustering using Hierarchies)\cite{zhang-96-birch}, which extracts centroids from building Hierarchies, mean-shift\cite{Cheng95meanshift} and DBSCAN \cite{Ester96adensity-based}, which locates the centroids by iteratively following the higher density areas. while these are generally simpler to understand, the 'shape' of the spatial distribution greately affects the effectivenes of these algorithms. 
 
@@ -82,7 +83,7 @@
          \textbf{Unnormalized Graph Laplacian (Raondom walk): } &L = D^{-1}L = I - D^{-1}W 
         \end{align*}
 
-        All three graph Laplacians are positive-semidifinte and have non-negative real valued eigen values. Also, 0 is an eigenvalue with multiplicity equal to number of connected components of the graph. Thus for fully connected graph one of the eigenvalues is 0. $L$ and $L_{sym}$ are symmetric. The eigenvectors of $L_{rw}$ are the eigen vectors of $L$ while $D^{1/2}u$ is eigenvector of $L_{sym}$ if $u$ is eigenvector of $L$. For information about unnormalized graph Laplacian, refer \cite{mohar-1991} and \cite{mohar-1997} while the standard reference for normalized graph Laplacian is \cite{graph-spectral-book}
+        All three graph Laplacians are positive-semidifinte and have non-negative real valued eigen values. Also, 0 is an eigenvalue with multiplicity equal to number of connected components of the graph. Thus for fully connected graph one of the eigenvalues is 0. $L$ and $L_{sym}$ are symmetric. The eigenvectors of $L_{rw}$ are the eigen vectors of $L$ while $D^{1/2}u$ is eigenvector of $L_{sym}$ if $u$ is eigenvector of $L$. For proofs of the above properties, refer to the appendix. For information about unnormalized graph Laplacian, refer \cite{mohar-1991} and \cite{mohar-1997} while the standard reference for normalized graph Laplacian is \cite{graph-spectral-book}
 
         The intuition of clustering is to divide the graph in to groups of vertices such that he edges between the vertices in the same group have high weight and the edges between vertices from different groups have zero or very low weight. Thus effective clustering is to solve the minicut problem which can be defined as, for a given number $k$ subsets, choosing the a partition $A_{1}, \dots, A_{k}$ which minimizes $$ \text{cut}(A_{1}, \dots, A_{k}) := \frac{1}{2}\sum_{i-1}^{k}W(A_i,\bar{A}_{i}) $$
 
@@ -136,7 +137,7 @@
 	Output: Clusters $A_{1},\dots, A_{k}$ with $A_{i} = \{x_{j}| y_{j} \in C_{i}\}$.
 
 	\subsection{Normalized Spectral Clustering - Ng, Jordan \& Weiss (2002)\cite{ng-jordan-01}}
-	\textit{This algorithm uses the eigenvectors of normalized symmetric laplacian $L_{sym}$}
+	\textit{This algorithm uses the eigenvectors of normalized symmetric laplacian $L_{sym}$. Note that if $D^{1/2}u$ is an eigenvector of $L_{sym}$ if $u$ is an eigenvector of $L$ hence an additional normalization step is needed.}
 
 	Input: Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct.
 	\begin{itemize}
@@ -149,15 +150,43 @@
 		\item Cluster the points $(y_{i}), i=1,\dots,n$ in $\mathbb{R}^k$ with the k-means algorithm into clusters $C_{1},\dots, C_{k}$.
 	\end{itemize} Output: Clusters $A_{1},\dots, A_{k}$ with $A_{i} = \{x_{j}| y_{j} \in C_{i}\}$.
 
+    \subsection{Numerical Experiments}
+
+    Using my implementation of the above algorithms, here are some results of my experiments
+
+    \begin{enumerate}
+        \item{Mixture of 4 Gaussians in $\mathbb{R}^1$}\\
+        This data set consists of a random sample of 200 points drawn according to a mixture of four Gaussians. The similarity function used was a gaussian kernel $e^{-\abs{x_i - x_j}^2/(2\sigma^2)}$ with $\sigma = 1$. The distribution of points, pictorial representation of matrices $W$ and $D$ and the final clustering results are showin in Figure \ref{fig:1dresults}
+
+        \begin{figure}
+        \includegraphics[width=0.9\textwidth]{../../1DCluster.jpg}
+        \caption{Clustering results for 200 points in $\mathbb{R}^1$}
+        \label{fig:1dresults}
+        \end{figure}
+
+        \item{Points in $\mathbb{R}^2$}\\
+        This data set consists of 1351 points in $\mathbb{R}^2$ distributed in 9 clusters with one outlier. The figure below shows the clustering in 5, 8 and 10 clusters. This example shows that even though in theory, both Ncut and RatioCut try to keep the clusters reasonably large, that if a single oulier point, if sufficiently separaed from the rest, is clustered independently. The reason for this is that rest of the clusters are very tightly organized. The similarity function used in this case was scaled euclidean distance. The clustering results in to 5, 8 and 10 clusters is shown in Figure \ref{fig:2dresults}
+
+        \begin{figure}
+        \includegraphics[width=\textwidth]{../../1DCluster.jpg}
+        \caption{Clustering results for 200 points in $\mathbb{R}^1$}
+        \label{fig:2dresults}
+        \end{figure}
+    \end{enumerate}
+    
+    
     \section{Practical considerations and challenges}
 
     While the algorithms are relatively simple to implement, there are some issues that arise in practice. 
     
+    \subsection{Parameters and Tuning Considerations}
     The first consideration is the choice of similarity function. The effectiveness of algorithem depends upon the similarity matrix $W$ which is defined by the similarity function. Although Gaussian similarity function $exp(-\norm{x_I - x_j}^2)/(2\sigma^2)$ is generally a reasonable choice in Euclidean space, the choice of similarity function would generally be guided by the domain of application. 
 
     Next would be the choice of similarity graph and its parameters. The type of graph ($k$-nearest neighbor, $\epsilon$-neighborhood etc.) affects how the areas of different densities are treated. For example, $k$-nearest neighbor graph may cause some points in a sparse cluster to be connected to a dense cluster or may break a high density cluster into smaller clusters if $k$ is not chosen appropriately. Also for $\epsilon$ neighborhood graph, the choice of $\epsilon$ dicates the sparsity of the matrix. While sparse matrix would be desirable since use of eigensolvers can greatly speedup the eigenvector calculation, it can also lead of loss of information and hence a balance must be achieved and choice of the parameters should be guided by the domain of application. 
 
-    Choice of Laplacian is the next concern. Fortunately, $L_{rw}$ is generally a good choice. 
+    Choice of Laplacian is the next concern. Recall that the goal of clustering is two fold, to minimize inter-cluster similarity or $cut(A,\bar{A})$, and maximize intra-cluster similarity or $W(A,A)$. Both Ncut and RatioCut will achieve the first objective since they both have $cut(A,\bar{A})$ in the numerator. However, note that $W(A,A) = W(A,V) - W(A,\bar{A}) = vol(A) - cut(A,\bar{A})$. This means that intera-cluster similarity is maximized when $cut(A,\bar{A})$ is minimized and $vol(A)$ is maximized. This is where Ncut outperforms RatioCut since it has $vol(A)$ in the denominator. Hence $L_{rw}$ is generally a good choice.
+
+    \subsection{Challanges}
 
     The following are the challenges that frequently arise in practice. 
 
@@ -169,6 +198,77 @@
     
     In \cite{tremblay-compressive-SC-16}, the authors propose an algorithm to sample $\mathcal{O}(\log(k))$ randomly fitered signals on the graph to serve as feature vectors instead of eigenvectors and by clustering random subset of $\mathcal{O}(k\log(k))$ nodes using random feature vectors and infering the cluster label of all $N$ nodes. This algorithm speeds up the clustering process by reducing the dimentionality and hence, the size of the problem.
 
+    \section{Optimizations}
+
+    \appendix
+    \chapter{Propositions related to Graph Laplacians}
+    \begin{prop}(Properties of L) The matrix L satisfies:
+        \begin{enumerate}
+            \item for every vector $f \in \mathbb{R}^{n}$ we have $$ f_{T}Lf = \frac{1}{2}\sum_{i,j=1}^{n} w_{ij}(f_{i}-f_{j})^{2} $$
+            \item L is symmetric and positive semi-definite
+            \item The smallest eigenvalue of L is 0, the corresponding eigenvector is the constant vector $\mathbf{1}$
+            \item L has $n$ non-negative, real-values eigenvalues $0=\lambda_{1} \le \lambda_{2} \le \cdots \le \lambda_{n}$
+        \end{enumerate}
+    \end{prop}
+    \textit{Proof:}
+    \begin{enumerate}
+        \item  By definition of $d_{j} = \sum_{i=1}^{n}w_{ij}$
+        \begin{align*}
+        f'Lf & = f'Df - f'Wf = \sum_{i=1}^{n}d_{i}f_{i}^{2} -  \sum_{i,j=1}^{n}f_{i}f_{j}w_{ij}\\
+        & = \frac{1}{2}\bigg(\sum_{i=1}^{n}d_{i}f_{i}^{2} -  2\sum_{i,j=1}^{n}f_{i}f_{j}w_{ij} + \sum_{i=j}^{n}d_{j}f_{j}^{2}\bigg)\\
+        & = \frac{1}{2}\sum_{i,j=1}^{n}w_{ij}(f_{i}-f_{j})^{2}
+        \end{align*}
+        \item Since $W$ and $D$ are symmetric $L = D-W$ is still symmetric. By result of part (a), since $w_{ij} \ge 0$ and $(f_{i}-f_{j})^{2} \ge 0$, $f'Lf \ge 0$, hence $L$ is symmetric and positive semi-definite
+        \item See proposition 2
+        \item Since $L$ is symmetric, all its eigenvalues are real. Also by part (c), the smallest eigenvalue is 0, 
+    \end{enumerate}
+
+    Note that the unnormalized graph Laplacian does not depend on the diagonal elements of $W$. $d_{ii} = \sum_{j=1}^{n}w_{ij}$, hence the diagonal elements are cancelled by $d_{ii}$ and the self-edges do not change the Laplacian. \\
+    
+    \begin{prop}
+        (Number of connected components and the spectrum of $L$) Let $G$ be an undirected graph with non-negative weights. Then the multiplicity $k$ of the engenvalue $0$ of $L$ equals the number of connected components $A_{1},\cdots,A_{k}$ in the graph. The eigenspace of eigenvalue $0$ is spanned by the indicator vectors $\mathbf{1}_{A_{1}},\cdots,\mathbf{1}_{A_{k}}$ of those components.				
+    \end{prop}
+    \textit{Proof:}
+    Starting with $k=1$, i.e. graph is fully connected. Assume that $f$ is the eigenvector with eigenvalue $0$. Then,
+    $$ 0 = f'Lf = \sum_{i,j=1}^{n}w_{ij}(f_{i}-f_{j})^{2} \implies f_{i} - f_{j}=0 \hspace{10pt}[\because w_{ij} > 0]$$
+    
+    Since we assumed a fully connected graph, $f$ has to be constant for the above argument to be true for any vertex in the connected component. Hence the vector $\textbf{1}$, which is the indicator vector of the component is an eigenvector corresponding to eigenvalue $0$. 
+    
+    Now, for $k>1$, we can easily rearrange the vertices in the matrix to put all the vertices of a connected component together. This would cause the matrix $L$ to be a block diagonal matrix. For each of these blocks, or components, the respective indicator vector is an eigenvector with eigenvalue 0. Thus the Matrix $L$ has eigenvalue $0$ with multiplicity equal to the number of components and the corresponding eigenvectors would be the indicator vectors of those components. 
+    $ $\\
+
+    \begin{prop}
+        (Properties of $L_{sym}$ and $L_{rw}$)
+        \begin{enumerate}
+            \item
+            For every $f\in\mathbb{R}^{n}$
+            $$ f'L_{sym}f = \frac{1}{2}\sum_{i,j=1}^{n}w_{ij}\bigg(\frac{f_{i}}{\sqrt{d_{i}}}-\frac{f_{j}}{\sqrt{d_{j}}}\bigg)^{2} $$
+            \item $\lambda$ is an eigenvalue of $L_{rw}$ with eigenvector $u$ iff $\lambda$ is an eigenvalue of $L_{sym}$ with eigenvector $w=D^{1/2}u$.
+            \item $\lambda$ is an eigenvalue of $L_{rw}$ with eigenvector $u$ iff $\lambda$ and $u$ solve the generalized eigenproblem $Lu=\lambda Du$
+            \item $0$ is an eigenvalue of $L_{rw}$ with the constant one vector $\mathbf{1}$ as eigenvector. $0$ is an eigenvalue of $L_{sym}$ with eigenvector $D^{1/2}\mathbf{1}$
+            \item $L_{sym}$ and $L_{rw}$ are positive semi-definite and have $n$ non-negative real-valued eigenvalues $0=\lambda_{1} \le \lambda_{2} \le \cdots \le \lambda_{n}$
+        \end{enumerate}
+    \end{prop}
+    \textit{Proof:}
+    \begin{enumerate}
+        \item This can be proved similar to part 1 of proposition 1. 
+        \item Assume $\lambda$ is an eigenvalue of $L_{sym}$ with eigenvector $w=D^{1/2}u$. 
+        \begin{align*}
+        L_{sym}D^{1/2}u &= \lambda D^{1/2}u \\
+        \implies  D^{-1/2}LD^{-1/2}D^{1/2}u &= \lambda D^{1/2}u \\
+        \implies D^{-1}Lu &= \lambda u \hspace{10pt}[\text{left multiplying with } D^{-1/2}] \\
+        \implies L_{rw}u &= \lambda u
+        \end{align*}
+        In otherwords, u is eigenvector of $L_{rw}$. To prove the other direction, apply the above steps in reverse order.
+        \item This can be proven in similar manner to above by left multiplying the generalized eigenproblem $Lu = \lambda Du$ with $D^{-1}$
+        \item $L_{rw}\mathbf{1} = (I-D^{-1}W)\mathbf{1} = \mathbf{1}-\mathbf{1} = 0$.\\ The above is true because $d_{i} = \sum_{j=1}^{n}wij \implies \big(D^{-1}W)\mathbf{1}\big)_{i} = \sum_{j=1}^{n}\frac{w_{ij}}{d_{i}}$, since $\mathbf{1}$ is the indicator vector. Then using part (b) leads to the second statement of this property. 
+        \item The first part (for $L_{sum}$) can be proved from part (a), similar to Proposition 1. Part 2 essentially states that $L_{sym}$ and $L_{rw}$ have the same eigenvalues, hence second statement is also proven.
+    \end{enumerate}					
+
+    \begin{prop}
+        (Number of connected components and spectra of $L_{sym}$ and $L_{rw}$) Let $G$ be an undirected graph with non-negative weights. Then the multiplicity $k$ of the eigenvalue $0$ of both $L_{sym}$ and $L_{rw}$ equals to the number of connected components $A_{1},\cdots,A_{k}$ in the graph. for $L_{rw}$, the eigenspace of $0$ is spanned by the indicator vectors $\mathbf{1_{A_{i}}}$ of these components. for $L_{sym}$ the eigenspace of $0$ is spanned by $D^{1/2}\mathbf{1_{A_{i}}}$
+    \end{prop}
+    \textit{Proof:} The proof of this is analogous to that of proposition 2, but using proposition 3.
 
 
 	\nocite{govl:96, parlet:98,stsu:90,gene:2018}
