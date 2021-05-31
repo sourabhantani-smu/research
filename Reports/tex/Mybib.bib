@@ -589,7 +589,7 @@
 }
 
 @article{Lu2015AcceleratedAF,
-  title   = {Accelerated algorithms for Eigen-Value Decomposition with application to spectral clustering},
+  title   = {Accelerated algorithms for EigenValue Decomposition with application to spectral clustering},
   author  = {Songtao Lu and Zhengdao Wang},
   journal = {2015 49th Asilomar Conference on Signals, Systems and Computers},
   year    = {2015},
@@ -641,10 +641,17 @@
 
 @article{ng-jordan-01,
   title   = {On spectral clustering: {A}nalysis and an algorithm},
-  author  = {A. Y. Ng and M. I. Jordan and Y. Weiss},
   journal = {Proc. NIPS},
-  year    = 2001
-} 
+  author = {Ng, Andrew Y. and Jordan, Michael I. and Weiss, Yair},
+  year = {2001},
+  publisher = {MIT Press},
+  address = {Cambridge, MA, USA},
+  booktitle = {Proceedings of the 14th International Conference on Neural Information Processing Systems: Natural and Synthetic},
+  pages = {849-856},
+  numpages = {8},
+  location = {Vancouver, British Columbia, Canada},
+  series = {NIPS'01}
+  }
 
 @book{NNM-book-09,
   author    = {R. B. Bapat and T.E.S. Raghavan},
@@ -765,17 +772,30 @@
 }
 
 @inproceedings{Meila01arandom,
-  author = {Marina Meila and Jianbo Shi},
-  title  = {A Random Walks View of Spectral Segmentation},
-  year   = {2001}
+  title = 	 {A Random Walks View of Spectral Segmentation},
+  author =       {Meil\u{a}, Marina and Shi, Jianbo},
+  booktitle = 	 {Proceedings of the Eighth International Workshop on Artificial Intelligence and Statistics},
+  pages = 	 {203-208},
+  year = 	 {2001},
+  volume = 	 {R3},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {04--07 Jan},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/r3/meila01a/meila01a.pdf},
+  url = 	 {http://proceedings.mlr.press/r3/meila01a.html}
 }
 
-@misc{Di13efficientestimation,
-  author = {Edoardo Di and Napoli Eric and Polizzi Yousef Saad},
-  title  = {Efficient estimation of eigenvalue counts in an interval},
-  year   = {2013}
+@article{Di13efficientestimation,
+ author    = {Edoardo Di Napoli and Eric Polizzi and Yousef Saad},
+  title     = {Efficient estimation of eigenvalue counts in an interval},
+  journal   = {CoRR},
+  volume    = {abs/1308.4275},
+  year      = {2013},
+  url       = {http://arxiv.org/abs/1308.4275},
+  archivePrefix = {arXiv},
+  eprint    = {1308.4275},
+  timestamp = {Mon, 13 Aug 2018 16:48:46 +0200}
 }
-
 @article{Shuman-SP-graph-13,
   title   = {The emerging field of signal processing on graphs: {Extending} high-dimensional data
                   analysis to networks and other irregular domains},
@@ -1252,7 +1272,7 @@
 }
 
 @inproceedings{Bottou95convergenceproperties,
-  author    = {Léon Bottou and Yoshua Bengio},
+  author    = {L\'eon Bottou and Yoshua Bengio},
   title     = {Convergence Properties of the K-Means Algorithms},
   booktitle = {Advances in Neural Information Processing Systems 7},
   year      = {1995},
@@ -1296,15 +1316,19 @@
   doi     = {10.1109/TIT.1982.1056489}
 }
 
-  @article{Cheng95meanshift,
+@article{Cheng95meanshift,
   author  = {Yizong Cheng},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
   title   = {Mean shift, mode seeking, and clustering},
-  journal = {IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE},
-  year    = {1995}
+  year    = {1995},
+  volume  = {17},
+  number  = {8},
+  pages   = {790-799},
+  doi     = {10.1109/34.400568}
 }
 
 @inproceedings{Ester96adensity-based,
-  author    = {Martin Ester and Hans-Peter Kriegel and Jörg Sander and Xiaowei Xu},
+  author    = {Martin Ester and Hans-Peter Kriegel and J\"org Sander and Xiaowei Xu},
   title     = {A density-based algorithm for discovering clusters in large spatial databases with noise},
   booktitle = {},
   year      = {1996},
@@ -1312,13 +1336,17 @@
   publisher = {AAAI Press}
 }
 
-@inproceedings{Ding05-nnmf-spectral,
-  author    = {Chris Ding and Xiaofeng He and Horst D. Simon},
-  title     = {On the equivalence of nonnegative matrix factorization and spectral clustering},
-  booktitle = {in SIAM International Conference on Data Mining},
-  year      = {2005}
+@inbook{Ding05-nnmf-spectral,
+  author    = {Ding,Chris and He,Xiaofeng and Simon,Horst D.},
+  year      = {2005},
+  month     = {April 21,},
+  title     = {On the Equivalence of Nonnegative Matrix Factorization and Spectral Clustering},
+  series    = {Proceedings of the 2005 SIAM International Conference on Data Mining (SDM)},
+  publisher = {Society for Industrial and Applied Mathematics},
+  pages     = {606-610},
+  isbn      = {9780898715934},
+  url       = {https://epubs.siam.org/doi/abs/10.1137/1.9781611972757.70}
 }
-
 
 @article{Lawton-1971-nnmf,
   author    = { William H.   Lawton  and  Edward A.   Sylvestre },
@@ -1340,7 +1368,6 @@
   volume  = {22},
   pages   = {S273-S276},
   year    = {1991},
-  note    = {Proceedings of the 1991 European Aerosol Conference},
   issn    = {0021-8502},
   doi     = {https://doi.org/10.1016/S0021-8502(05)80089-8},
   url     = {https://www.sciencedirect.com/science/article/pii/S0021850205800898},
@@ -1348,22 +1375,25 @@
 }
 
 @inproceedings{Zhang-2108-pca,
-  author = {Zhang, Nian and Leatham, Keenan and Xiong, Jiang and Zhong, Jing},
-  year   = {2018},
-  month  = {11},
-  pages  = {349-354},
-  title  = {PCA-K-Means Based Clustering Algorithm for High Dimensional and Overlapping Spectra Signals},
-  doi    = {10.1109/ICICIP.2018.8606667}
+  author    = {Zhang, Nian and Leatham, Keenan and Xiong, Jiang and Zhong, Jing},
+  booktitle = {2018 Ninth International Conference on Intelligent Control and Information Processing (ICICIP)},
+  title     = {PCA-K-Means Based Clustering Algorithm for High Dimensional and Overlapping Spectra Signals},
+  year      = {2018},
+  volume    = {},
+  number    = {},
+  pages     = {349-354},
+  doi       = {10.1109/ICICIP.2018.8606667}
 }
 
 @article{mohar-1991,
   author  = {Mohar, B and Alavi, Y and Chartrand, G and Oellermann, Ortrud and Schwenk, Allen},
   year    = {1991},
   month   = {01},
-  pages   = {5364},
   title   = {The Laplacian spectrum of graphs},
   volume  = {2},
-  journal = {Graph Theory, Combinatorics and Applications}
+  journal = {Graph Theory, Combinatorics and Applications},
+  pages = {871-898},
+  publisher = {Wiley}
 }
 
 @inbook{mohar-1997,
@@ -1387,4 +1417,14 @@
   volume  = {11},
   number  = {9},
   doi     = {10.1109/43.159993}
+}
+
+@article{DIMLow,
+    author = {I. K\"arkk\"ainen and P. Fr\"anti},
+    title = {Gradual model generator for single-pass clustering},
+    journal = {Pattern Recognition},
+    year = {2007},
+    volume = {40},
+    number = {3},
+    pages = {784--795}
 }
