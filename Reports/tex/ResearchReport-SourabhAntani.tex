@@ -14,6 +14,9 @@
 \usepackage{enumerate,url}
 \usepackage{etoolbox}
 \usepackage{algorithm2e}
+\usepackage{caption}
+\usepackage{subcaption}
+
 \makeatletter
 \patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
 \makeatother
@@ -187,7 +190,7 @@
         This data set consists of a random sample of 200 points drawn according to a mixture of four Gaussians. The similarity function used was a Gaussian kernel $e^{-\abs{x_i - x_j}^2/(2\sigma^2)}$ with $\sigma = 1$. The distribution of points, pictorial representation of matrices $W$ and $D$ and the final clustering results are shown in in Figure \ref{fig:1dresults}
 
         \begin{figure}[h]
-        \includegraphics[width=0.9\textwidth]{../../1DCluster.jpg}
+        \includegraphics[width=0.9\textwidth]{../../images/1DCluster.jpg}
         \caption{Clustering results for 200 points in $\mathbb{R}^1$}
         \label{fig:1dresults}
         \end{figure}
@@ -195,20 +198,91 @@
         \item{Points in $\mathbb{R}^2$}\\
         This data set (the 'dim2' data-set from \cite{DIMLow}) consists of 1351 points in $\mathbb{R}^2$ distributed in 9 clusters with one outlier. The figure below shows the clustering in 5, 8 and 10 clusters. This example shows that even though in theory, both Ncut and RatioCut try to keep the clusters reasonably large, that if a single outlier point, if sufficiently separated from the rest, is clustered independently. The reason for this is that rest of the clusters are very tightly organized. The similarity function used in this case was scaled euclidean distance. The clustering results in to 5, 8 and 10 clusters is shown in Figure \ref{fig:2dresults}
         \begin{figure}[h]
-        \includegraphics[width=\textwidth]{../../2DCluster.jpg}
+        \includegraphics[width=\textwidth]{../../images/2DCluster.jpg}
         \caption{Clustering results for 200 points in $\mathbb{R}^1$}
         \label{fig:2dresults}
         \end{figure}
 
         \item{Unsupervised Image Classification}\\
-        Image recognition is generally considered to be a supervised machine learning problem. A trained neural network can recognize and classify images very high accuracy. However, at times, a large number of training set of images need to be labeled. One such application arises in biology and medical imaging and manually labeling the training set of images may not be possible since trained personnel would be required for the purpose. One way to handle this type of situation is to cluster these images and then inspect a small sample of images from each cluster. If clustering was effective, the images in a cluster generally would fall under one category (in this case, the same digit) and the manual task gets reduced to labeling the cluster. To test this approach, I took 2000 images from the MNIST data-set. The MNIST data-set is a set of images of handwritten digits and each image is 28 $\times$ 28 pixel single color image converted to an array of 784 (28 $\times$ 28) integers from 0 to 256 representing the intensity of the color. I took 2000 of the unlabeled images and used Normalized spectral clustering algorithm by Shi \& Malik \cite{Shi-Malik-maxcut-00} to cluster the 2000 images into 20 clusters. Even though there are 10 digits I chose to use 20 cluster to allow for some variability of handwriting patterns. Given any two images, the count of pixels that are non-zero in both of them was used as the similarity function. The result is displayed in Figure \ref{fig:mnistImages} which shows the 20 clusters as 20 rows with the first 10 images in each cluster in 10 columns. As we can see, there is some noise in almost every cluster but over all, most clusters are pretty clean and the only a few of the clusters need to be manually inspected.
+        Image recognition is generally considered to be a supervised machine learning problem. A trained neural network can recognize and classify images very high accuracy. However, at times, a large number of training set of images need to be labeled. One such application arises in biology and medical imaging and manually labeling the training set of images may not be possible since trained personnel would be required for the purpose. One way to handle this type of situation is to cluster these images and then inspect a small sample of images from each cluster. If clustering was effective, the images in a cluster generally would fall under one category (in this case, the same digit) and the manual task gets reduced to labeling the cluster. To test this approach, I took 2000 images from the MNIST data-set. The MNIST data-set is a set of images of handwritten digits and each image is 28 $\times$ 28 pixel single color image converted to an array of 784 (28 $\times$ 28) integers from 0 to 256 representing the intensity of the color. I took 2000 of the unlabeled images and used Normalized spectral clustering algorithm by Shi \& Malik \cite{Shi-Malik-maxcut-00} to cluster the 2000 images.
+        
+        Figure \ref{fig:mnist10ClusterImages} shows the same dataset clustered into 10 clusters using three different similarity measures. The count of pixels that are non-zero in both images, 2-norm of the difference vector between two images and the count pixels that are zero or non-zero in both images were used as similarity measures respectively. \ref{fig:mnistWImages} shows the weighted adjecenty matrix using all the three similarity functions mentioned above. In all these three situations we see that some of the clusters cleanly group the images for the same digit. However a significant number of clusters are composed of a mixture of digits. Upon some inspection it can be seen small changes in the handwriting style like use of curves instead of straight lines for digits like 4 and 9 or use of the horizontal line for digit 7 cause these digits to be clustered with a different digit. The limitation here should be attributed to the similarity function and not the clustering algorithm itself. With a more sophesticated similarity function that is robust to such changes, e.g. a function that counts the number of straight strokes, curves and circles, this algorithm should be able to cluster the digits approprietely into 10 clusters.
+
+        Alternately, we can cluster the images into more clusters so that the algorithm will be able to create smaller and tighter clusters. Multiple cluster can be alloted to the same digit with different writing styles and strokes clustered into separate clusters. This reduces the number of images erroneously classified. Figure \ref{fig:mnistImages} shows the images clustered into 20 clusters shown as a row per cluster with the first 10 images in each cluster in 10 columns. As we can see, there is some noise in almost every cluster but over all, most clusters are pretty clean and the only a few of the clusters need to be manually inspected. 
+
+        Finally we note that the Unnormalized and the Symmetric Normalized Laplacian variants of the algorithms always ended up creating first $k$-1 clusters with very few images and placing all of the remaining images into one cluster. Thus, both these algorithms, for this use case, generated undesirable results. In the next section we will see how Ncut (which leads to Normalized spectral clustering with $L_{rw}$) uses the volume of the clusters in denominator and, in our use case, is more likly to lead to balanced clusters compared to RatioCut.
+
         \begin{figure}[h]
             \begin{center}
-            \includegraphics[height=6.5in]{../../number_clustering.png}
+                \begin{subfigure}[b]{0.3\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/number_clustering_10_0norm.png}
+                    \caption{Count of pixels that are non-zero in both images as similarity measure}
+                    \label{fig:clustering_10_0norm}
+                \end{subfigure}           
+                \begin{subfigure}[b]{0.3\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/number_clustering_10_2norm.png}
+                    \caption{Inverse of 2-norm of the difference vector between two images as similarity measure}
+                    \label{fig:clustering_10_2norm}
+                \end{subfigure}           
+                \begin{subfigure}[b]{0.3\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/number_clustering_10_hamming.png}
+                    \caption{Count of pixels that are zero or non-zero in both images as similarity measure}
+                    \label{fig:clustering_10_hamming}
+                \end{subfigure}           
             \end{center}
-            \caption{2000 images from MNIST data-set were clustered into 20 clusters with count of pixels that are non-zero in two images as the measure of similarity between them. In the above figure, each row of images represent a cluster and show the first 10 images in that cluster}
+            \caption{2000 images from MNIST data-set were clustered into 10 clusters. In the above figure, each row of images represent a cluster and show the first 10 images in that cluster}
+            \label{fig:mnist10ClusterImages}
+        \end{figure}
+
+        \begin{figure}[h]
+            \begin{center}
+                \begin{subfigure}[b]{0.3\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/w_0norm.png}
+                    \caption{Count of pixels that are non-zero in both images as similarity measure}
+                    \label{fig:w_0norm}
+                \end{subfigure}           
+                \begin{subfigure}[b]{0.3\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/w_2norm.png}
+                    \caption{Inverse of 2-norm of the difference vector between two images as similarity measure}
+                    \label{fig:w_2norm}
+                \end{subfigure}           
+                \begin{subfigure}[b]{0.3\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/w_hamming.png}
+                    \caption{Count of pixels that are zero or non-zero in both images as similarity measure}
+                    \label{fig:w_hamming}
+                \end{subfigure}           
+            \end{center}
+            \caption{Weighted adjecency matrix for 2000 images from MNIST data-set with similarity functions described under the images}
+            \label{fig:mnistWImages}
+        \end{figure}
+
+
+        \begin{figure}[h]
+            \begin{center}
+                \begin{subfigure}[b]{0.4\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/number_clustering.png}
+                    \caption{Count of pixels that are non-zero in both images as similarity measure}
+                    \label{fig:clustering_20_0norm}
+                \end{subfigure}
+                \begin{subfigure}[b]{0.4\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{../../images/number_clustering_20_2norm.png}
+                    \caption{Inverse of 2-norm of the difference vector between two images as similarity measure}
+                    \label{fig:clustering_20_2norm}
+                \end{subfigure}
+            \end{center}
+            \caption{2000 images from MNIST data-set were clustered into 20 clusters. In the above figure, each row of images represent a cluster and show the first 10 images in that cluster}
             \label{fig:mnistImages}
         \end{figure}
+
+        
     \end{enumerate}
     
     
