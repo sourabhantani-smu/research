@@ -79,7 +79,7 @@
 
     \section{Some Terminology}
 
-        Given an \textbf{undirected graph} $\mathbf{G=(V,E)}$ with $\mathbf{V=\{v_{1},\dots,v_{n}\}}$ being the \textbf{set of vertices} and $\mathbf{E}$ being the \textbf{set of weighted edges} such that each edge between two vertices $v_{i}$ and $v_{j}$ carries a non-negative weight $w_{ij} \ge 0$.
+        Given an \textbf{undirected graph} $\mathbf{G=(V,E)}$ with $\mathbf{V=\{v_{1},\dots,v_{n}\}}$ being the \textbf{set of vertices} and $\mathbf{E}$ being the \textbf{set of weighted edges} such that each edge between two vertices $v_{i}$ and $v_{j}$ carries a non-negative weight $w_{ij} \ge 0$ that is computed based on the similarity function.
 
         The \textbf{Weighted \textit{adjacency matrix}} of the graph is the matrix $\mathbf{W=(w_{ij})_{i,j=1,\dots,n}}$. If $w_{ij}=0$, vertices $v_{i}$ and $v_{j}$ are not connected. $w_{ij}=w_{ji}$ since $G$ is undirected. 
 
@@ -138,12 +138,12 @@
 
     All three algorithms essentially follow the same steps, using the first $k$ eigenvectors of the graph Laplacian, create a matrix and then create $k$ clusters from the rows of that matrix using k-Means algorithm. Finally, create the clusters of data points with the same indices as the indices of the matrix rows in the $k$ clusters formed by k-means. For a proof of how the relaxation of the above balancing conditions to arrive at an approximation of NCut and RatioCut leads to the Normalized and Unnormalized Spectral Clustering respectively, see \cite{Luxburg2007}
 	
-	\subsection{Unnormalized Spectral Clustering}
+	\subsection{Unnormalized Spectral Clustering \cite{hagen-kahng-1992}}
     \begin{algorithm}
         \DontPrintSemicolon
         \KwIn{Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct.}
         \Begin{
-		Construct a similarity graph and its weighted adjacency matrix $W$\;
+		Construct a similarity graph and its weighted adjacency matrix $W$ based on similarity function\;
 		Compute the unnormalized Laplacian $L$\;
 		Compute the first $k$ eigenvectors $u_{1},\dots, u_{k} $ of $L$\;
 		Let $U \in \mathbb{R}^{n\times k}$ be the matrix containing the vectors $u_{1},\dots, u_{k}$ as columns\;
@@ -159,7 +159,7 @@
         \DontPrintSemicolon
         \KwIn{Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct}
 	    \Begin{
-            Construct a similarity graph and its weighted adjacency matrix $W$\;
+            Construct a similarity graph and its weighted adjacency matrix $W$ based on similarity function\;
             Compute the unnormalized Laplacian $L$.\;
             Compute the first $k$ generalized eigenvectors $u_{1},\dots, u_{k} $ of generalized eigenproblem $Lu = \lambda Du$.\;
             Let $U \in \mathbb{R}^{n\times k}$ be the matrix containing the vectors $u_{1},\dots, u_{k}$ as columns.\;
@@ -176,7 +176,7 @@
         \DontPrintSemicolon
         \KwIn{Similarity matrix $S \in \mathbb{R}^{n\times n}$, number $k$ of clusters to construct.}
         \Begin{
-            Construct a similarity graph and its weighted adjacency matrix $W$\;
+            Construct a similarity graph and its weighted adjacency matrix $W$ based on similarity function\;
             Compute the normalized Laplacian $L_{sym}$\;
             Compute the first $k$ eigenvectors $u_{1},\dots, u_{k} $ of $L_{sym}$\;
             Let $U \in \mathbb{R}^{n\times k}$ be the matrix containing the vectors $u_{1},\dots, u_{k}$ as columns\;
@@ -209,37 +209,41 @@
         \label{fig:2dresults}
         \end{figure}
 
-        \item{Unsupervised Image Classification}\\
+        \item{Image Classification}\\
         Image recognition is generally considered to be a supervised machine learning problem. A trained neural network can recognize and classify images with very high accuracy. However, this requires that the training set images need to be labeled. One such application arises in biology and medical imaging and manually labeling the training set of images may not be possible since trained personnel would be required for the purpose. One way to handle this type of situation is to cluster these images and then inspect a small sample of images from each cluster. If clustering was effective, the images in a cluster generally would fall under one category (in this case, the same digit) and the manual task gets reduced to labeling the cluster. To test this approach, I took 2000 images from the MNIST dataset. The MNIST dataset is a set of images of handwritten digits and each image is a 28$\times$28-pixel single color image converted to an array of 784 (28 $\times$ 28) integers from 0 to 256 representing the intensity of the color. I took 2000 of the unlabeled images and used Normalized spectral clustering algorithm by Shi \& Malik \cite{Shi-Malik-maxcut-00} to cluster the 2000 images.
         
-        Figure \ref{fig:mnist10ClusterImages} shows the same dataset clustered into 10 clusters using three different similarity measures. The count of pixels that are non-zero in both images, 2-norm of the difference vector between two images, and the count pixels that are zero or non-zero in both images were used as similarity measures respectively. \ref{fig:mnistWImages} shows the weighted adjacency matrix using all the three similarity functions mentioned above. In all these three situations we see that some of the clusters cleanly group the images for the same digit. However, a significant number of clusters are composed of a mixture of digits. Upon some inspection, it can be seen small changes in the handwriting style like the use of curves instead of straight lines for digits like 4 and 9 or use of the horizontal line for digit 7 cause these digits to be clustered with a different digit. The limitation here should be attributed to the similarity function and not the clustering algorithm itself. With a more sophisticated similarity function that is robust to such changes, e.g. a function that counts the number of straight strokes, curves, and circles, this algorithm should be able to cluster the digits appropriately into 10 clusters.
+        Figure \ref{fig:mnist10ClusterImages} shows the same dataset clustered into 10 clusters using three different similarity measures. The count of pixels that are non-zero in both images ($\lvert \lvert \mathbf{v_i} \circ \mathbf{v_j} \rvert \rvert_1$), reciprocal of 2-norm of the difference vector between two images ($\lvert \lvert \mathbf{v_i} - \mathbf{v_j} \rvert \rvert_2^{-1}$), and the count pixels that are zero or non-zero in both images were used as similarity measures respectively. \ref{fig:mnistWImages} shows the weighted adjacency matrix using all the three similarity functions mentioned above. The weighted adjacency matrix, does not show clear clusters but the algorithm is able to cluster similar images to a certain extent. In all these three situations we see that some of the clusters cleanly group the images for the same digit. However, some of the  clusters are composed of a mixture of digits. Upon some inspection, it can be seen small changes in the handwriting style like the use of curves instead of straight lines for digits like 4 and 9 or use of the horizontal line for digit 7 cause these digits to be clustered with a different digit. The limitation here can be overcome with a more sophisticated similarity function that is robust to such changes, e.g. a function that counts the number of straight strokes, curves, and circles, this algorithm should be able to cluster the digits appropriately into 10 clusters.
 
-        Alternately, we can cluster the images into more clusters so that the algorithm will be able to create smaller and tighter clusters. Multiple clusters can be allocated  to the same digit with different writing styles and strokes clustered into separate clusters. This reduces the number of images erroneously classified. Figure \ref{fig:mnistImages} shows the images clustered into 20 clusters shown as a row per cluster with the first 10 images in each cluster in 10 columns. As we can see, there is some noise in almost every cluster but overall, most clusters are pretty clean and only a few of the clusters need to be manually inspected. 
+        Alternately, we can cluster the images into more clusters so that the algorithm will be able to create smaller and tighter clusters. Multiple clusters can be allocated  to the same digits with different writing styles and strokes clustered into separate clusters. This reduces the number of images erroneously classified. Figure \ref{fig:mnistImages} shows the images clustered into 20 clusters shown as a row per cluster with the first 10 images in each cluster in 10 columns. As we can see, there is some noise in almost every cluster but overall, most clusters are pretty clean and only a few of the clusters need to be manually inspected. 
 
-        Finally, we note that the Unnormalized and the Symmetric Normalized Laplacian variants of the algorithms always ended up creating first $k$-1 clusters with very few images and placing all of the remaining images into one cluster. Thus, both these algorithms, for this use case, generated undesirable results. In the next section, we will see how Ncut (which leads to Normalized spectral clustering with $L_{rw}$) uses the volume of the clusters in the denominator and, in our use case, is more likly to lead to balanced clusters compared to RatioCut.
+        Also, it can be noted that various similarity functions produce slightly different results in the case of 10 and 20 clusters. 
+
+        The results above show the clustering with 10 and 20 clusters. However the optimal number of clusters can be bettween 10 and 20 or may even be beyond higher than 20. To find the optimum cluster count, one has to compute $Ncut$ for each run (since we use the algorithm by \cite{Shi-Malik-maxcut-00}) and findout the minima of $Ncut$
+
+        Finally, we note that the Unnormalized and the Symmetric Normalized Laplacian variants of the algorithms for this use case, usually generated worse results. In the next section, we will see how Ncut (which leads to Normalized spectral clustering with $L_{rw}$) uses the volume of the clusters in the denominator and, in our use case, is more likly to lead to balanced clusters compared to RatioCut.
 
         \begin{figure}[h]
             \begin{center}
                 \begin{subfigure}[b]{0.3\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/number_clustering_10_0norm.png}
-                    \caption{Count of pixels that are non-zero in both images as similarity measure}
+                    \caption{$\lvert \lvert \mathbf{v_i} \circ \mathbf{v_j} \rvert \rvert_1$ \vspace{10pt} }
                     \label{fig:clustering_10_0norm}
                 \end{subfigure}           
                 \begin{subfigure}[b]{0.3\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/number_clustering_10_2norm.png}
-                    \caption{Inverse of 2-norm of the difference vector between two images as similarity measure}
+                    \caption{$\lvert \lvert \mathbf{v_i} - \mathbf{v_j} \rvert \rvert_2^{-1}$ \vspace{10pt} }
                     \label{fig:clustering_10_2norm}
                 \end{subfigure}           
                 \begin{subfigure}[b]{0.3\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/number_clustering_10_hamming.png}
-                    \caption{Count of pixels that are zero or non-zero in both images as similarity measure}
+                    \caption{Count of pixels that are zero or non-zero in both images}
                     \label{fig:clustering_10_hamming}
                 \end{subfigure}           
             \end{center}
-            \caption{2000 images from MNIST dataset were clustered into 10 clusters. In the above figure, each row of images represent a cluster and show the first 10 images in that cluster}
+            \caption{2000 images from MNIST dataset were clustered into 10 clusters with similarity functions as shown below the clustering result. In the above figure, each row of images represent a cluster and show the first 10 images in that cluster}
             \label{fig:mnist10ClusterImages}
         \end{figure}
 
@@ -248,19 +252,19 @@
                 \begin{subfigure}[b]{0.3\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/w_0norm.png}
-                    \caption{Count of pixels that are non-zero in both images as similarity measure}
+                    \caption{$\lvert \lvert \mathbf{v_i} \circ \mathbf{v_j} \rvert \rvert_1$ \vspace{10pt} }
                     \label{fig:w_0norm}
                 \end{subfigure}           
                 \begin{subfigure}[b]{0.3\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/w_2norm.png}
-                    \caption{Inverse of 2-norm of the difference vector between two images as similarity measure}
+                    \caption{$\lvert \lvert \mathbf{v_i} - \mathbf{v_j} \rvert \rvert_2^{-1}$ \vspace{10pt} }
                     \label{fig:w_2norm}
                 \end{subfigure}           
                 \begin{subfigure}[b]{0.3\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/w_hamming.png}
-                    \caption{Count of pixels that are zero or non-zero in both images as similarity measure}
+                    \caption{Count of pixels that are zero or non-zero in both images}
                     \label{fig:w_hamming}
                 \end{subfigure}           
             \end{center}
@@ -274,13 +278,13 @@
                 \begin{subfigure}[b]{0.4\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/number_clustering.png}
-                    \caption{Count of pixels that are non-zero in both images as similarity measure}
+                    \caption{$\lvert \lvert \mathbf{v_i} \circ \mathbf{v_j} \rvert \rvert_1$ \vspace{10pt} }
                     \label{fig:clustering_20_0norm}
                 \end{subfigure}
                 \begin{subfigure}[b]{0.4\textwidth}
                     \centering
                     \includegraphics[width=\textwidth]{../../images/number_clustering_20_2norm.png}
-                    \caption{Inverse of 2-norm of the difference vector between two images as similarity measure}
+                    \caption{$\lvert \lvert \mathbf{v_i} - \mathbf{v_j} \rvert \rvert_2^{-1}$ \vspace{10pt} }
                     \label{fig:clustering_20_2norm}
                 \end{subfigure}
             \end{center}
@@ -321,22 +325,24 @@
     The algorithm for compressive spectral clustering is, however quite involved and is outlined briefly below. 
 
     \begin{itemize}
-        \item First, to get the first $k$ eigenvectors,  
+        \item First, to approximate the first $k$ eigenvectors,  
             \begin{itemize}
             \item Estimate the $k^{th}$ eigenvalue using eigen-counting techniques detailed in \cite{Di13efficientestimation} 
             \item Build polynomial estimation of the low-pass filter $H := h(L) = U h(\Lambda) U^T$ where $h({\Lambda})$ is the diagonal matrix with 1 on primary diagonal for the first $k$ rows/columns and 0 otherwise. $U$ here is the matrix is the eigenvectors of $L$. However, $L$ is not diagonalized, instead $Hx$ is approximated as $\sum_{l=0}^{p}\alpha_l L^{l}x$ by successive matrix-vector products with $L$.
             \end{itemize}
         \item  Generate $d$ random Gaussian signals $r_1,\dots, r_d$ with mean $0$ and variance $1/d$, Let $S = (r_1|r_2|\dots|r_d) \in \mathbb{R}^{N\times d}$
-        \item Filter $S$ with $H$ and define for each node $i$, its feature vector $\bar{f}_i \in \mathbb{R}^d = \big[ (HS)^T \delta_i \big] / \norm{(HS)^T \delta_i} $
+        \item Filter $S$ with $H$ and define for each node $i$, its feature vector $\bar{f}_i = \big[ (HS)^T \delta_i \big] / \norm{(HS)^T \delta_i} \in \mathbb{R}^d$
         \item Generate random sampling matrix $M\in \mathbb{R}^{n\times N}$ to keep $n=2k \log{k}$ features. 
         \item Run $k$-means on the reduced dataset with Euclidean vector distance to obtain $k$ reduced indicator vectors, one for each cluster. 
         \item Interpolate each reduced indicator vector to find the cluster assignment for each node on the graph.
     \end{itemize}
 
-    \chapter{Intended Work}
-    In practice quite frequently the number of clusters is not known. Hence a clustering method is repeatedly applied with an increasing number of clusters until the desired accuracy is reached. With spectral clustering, since the number of clusters depends on the number of eigenvectors used, the information from a prior step may be used in the subsequent step to avoid redundant work. For example, since the first $k$ eigenvectors and hence, eigenvalues are, known, we may be able to use this knowledge in, at least, providing bound on the next eigenvalue and use shift inverse power iteration. 
+    \chapter{Future Work}
+    In practice quite frequently the number of clusters is not known. Hence a clustering method is repeatedly applied with an increasing number of clusters until the desired accuracy is reached. With spectral clustering, since the number of clusters depends on the number of eigenvectors used, repeated computation of eigenvectors have to be performed.
 
-    Another possibility is to use Krylov subspace based methods. Although I do not have a clear path, Krylov-space methods are an attractive possibility for two reasons, one is that adding dimensions, i.e. subsequent basis vectors is simply a matrix-vector product and the second reason is that $L$ and $L_{sym}$ are symmetric and thus will lead to Lanczos method and tridiagonal instead of Hessenberg matrix. It may be possible to achieve clustering using Krylov subspace basis vectors, thus we may not need to compute the eigenvectors. 
+    This problem can be alleviated with a faster eigensolver. Also, if the information from a prior step can be used in a subseuent pass, using a method that allows hot-restart the repetitive work can be avoided and the we can quickly iterate of various cluster configurations. Based on prior work like \cite{chebydav07}, \cite{bchebydav10} and \cite{zhengwang:15} Chebeshev Filters and Chebyshev-Davidson method look promising for future research. 
+
+    Another possibility is to use dimensionality reduction methods, even if they may not fall strictly into spectral clustering methods. However, there are methods like Non-Negatve Matrix Factorization that try to extrat lower dimensional features that help in clustering. In spectral-clusterin methods, lower dimension would means faster $k$.means and eventually, quickly clustering.
 
 
     \appendix
