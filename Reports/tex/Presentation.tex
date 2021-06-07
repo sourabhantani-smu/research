@@ -71,15 +71,14 @@
 			\item<2-> Normalized Symmetric Graph Laplacian [Chung, 1997]
 				\begin{itemize}
 					\item $L_{sym} = D^{-1/2}LD^{-1/2} = I - D^{-1/2}WD^{-1/2}$ (Symmetric)
-					\item if $(\lambda,u)$ is an eigenpair of $L$ , then $(\lambda, D^{1/2}u)$ is eigenpair of $L_{sym}$.
 				\end{itemize}
 			\item<3-> Normalized Random Walk Graph Laplacian [Chung 1997]
 				\begin{itemize}
 					\item $L_{rw} = D^{-1}L = I - D^{-1}W$ (Not-Symmetric)
-					\item if $(\lambda,u)$ is an eigenpair of $L$ , then $(\lambda, D^{1/2}u)$ is eigenpair of$L_{rw}$.
 				\end{itemize}
-			\item<4-> All Laplacians are Positive-semidefinte, hence have non-Negative Real-Valued Eigenvalues
-			\item<5-> 0 is an eigenvalue with multiplicity equal to number of connected components
+			\item<4-> The eigenpair $(\lambda, u)$ of $L_{rw}$ solve $Lu=\lambda Du$ and in this case $D^{1/2}u$ is eigenvector of $L_{sym}$ with eigenvalue $\lambda$. 
+			\item<5-> All Laplacians are Positive-semidefinte, hence have non-Negative Real-Valued Eigenvalues
+			\item<6-> 0 is an eigenvalue with multiplicity equal to number of connected components
 		\end{itemize}
 	\end{frame}
 
@@ -287,7 +286,7 @@
 			\item Accelerated Eigensolvers
 			\begin{itemize}
 				\item Accelerating Lanczos
-				\item Chebyshev-Davidson Methods	 [Zhou \& Saad 2010] [Z. Wang, 2015]
+				\item Chebyshev-Davidson Methods	 [Zhou \& Saad 2007] [Z. Wang, 2015]
 				\item Taking advantage of structure				
 			\end{itemize}
 			\item Detecting number of clusters adaptively.

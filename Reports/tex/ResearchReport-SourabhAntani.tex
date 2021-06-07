@@ -105,7 +105,7 @@
 		\begin{itemize}
 			\item All three graph Laplacians are positive-semidefinte and have non-negative real-valued eigenvalues.
 			\item 0 is an eigenvalue with multiplicity equal to the number of connected components of the graph. Thus for a fully connected graph one of the eigenvalues is 0. \item $L$ and $L_{sym}$ are symmetric. 
-			\item The eigenvectors of $L_{rw}$ are the eigenvectors of $L$ while $D^{1/2}u$ is eigenvector of $L_{sym}$ if $u$ is eigenvector of $L$. 
+			\item The eigenpair $(\lambda, u)$ of $L_{rw}$ solve $Lu=\lambda Du$ and in this case $D^{1/2}u$ is eigenvector of $L_{sym}$ with eigenvalue $\lambda$. 
         
     	\end{itemize}
     For proofs of the above properties, refer to the appendix. As far as naming goes, $L_{sym}$ follows from its structure. While $L_{rw}$ is so named because its structure is derived from the point of view of random walk on the graph. Taking $p_j = w_{ij}/d_i$ as the probability of an edge between $v_i$ and $v_j$ being selected for random walk, the transition matrix for the random walk is defined by $P = D^{-1}W$. Thus $L_{rw} = I-P$. This is why the second form of normalized graph Laplacian is denoted by $L_{rw}$.
