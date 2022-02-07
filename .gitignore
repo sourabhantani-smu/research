@@ -5,3 +5,6 @@ Reports/tex/*.bbl
 Reports/tex/*.fls
 Reports/tex/*.log
 Reports/tex/*.synctex.gz
+Reports/tex/Report-A Chebyshev-Davidson Algorithm For Large Symmetric Eigenproblems.bcf
+SampleCode/*
+Reports/tex/Report-A Chebyshev-Davidson Algorithm For Large Symmetric Eigenproblems.run.xml
