@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mv Reports/tex/*.pdf Reports/PDF
+mv Reports/tex/*.pdf Reports/PDF/*
 
 curDir=$(pwd)
 for dir in $(find . -type d -print)

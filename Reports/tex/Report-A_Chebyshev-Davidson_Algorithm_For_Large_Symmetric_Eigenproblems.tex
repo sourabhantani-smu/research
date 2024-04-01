@@ -1,0 +1,151 @@
+\documentclass[10pt,a4paper,twoside]{report}
+\usepackage[scaled=0.92]{helvet}
+\usepackage[margin=1in]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage{blindtext}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{enumerate,url}
+\usepackage{etoolbox}
+\usepackage[linesnumbered,lined,boxed,commentsnumbered]{algorithm2e}
+
+
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+\makeatletter
+\patchcmd{\chapter}{\@maketitle\cleardoublepage}{}{}{}
+\makeatother
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+
+\newtheorem{prop}{Proposition}
+\newtheorem{theorem}{Theorem}
+
+
+
+\newcommand{\abs}[1]{\lvert {#1} \rvert}
+\newcommand{\norm}[1]{\lvert\lvert {#1} \rvert\rvert}
+
+
+\pagestyle{fancy}
+\lhead{[WORK IN PROGRESS] Report on Paper "A Chebshev-Davidson Algorithm For Large Symmetric Eigenproblems" \\by Yunkai Zhou and Yousef Saad}
+\rhead{Sourabh Antani}
+\cfoot{\thepage\ of \pageref{LastPage}}
+
+\fancypagestyle{plain}{%
+\lhead{[WORK IN PROGRESS] Report on Paper "A Chebshev-Davidson Algorithm For Large Symmetric Eigenproblems" \\by Yunkai Zhou and Yousef Saad}
+\rhead{Sourabh Antani}
+\cfoot{\thepage\ of \pageref{LastPage}}
+}
+
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+\author{Sourabh Antani}
+\title{[WORK IN PROGRESS] \\ Report on Paper "A Chebshev-Davidson Algorithm For Large Symmetric Eigenproblems" \\by Yunkai Zhou and Yousef Saad}
+\date{}
+
+\begin{document}
+	\maketitle
+
+	\thispagestyle{fancy}
+	\chapter{Introduction}
+	This is a paper report on the paper 'A Chebshev-Davidson Algorithm For Large Symmetric Eigenproblems" by Yunkai Zhou and Yousef Saad \cite{chebydav07}. All the sections in this report are taken or paraphrased from \cite{chebydav07} and not original work. The structure of this report also follows the structure of the paper so that it is easy to follow.
+
+	Considering standard eigenvalue problem $Au = \lambda u, $ with $A\in \mathbb{R}^{n \times n}$ is symmetric, $n$ is large and smallest eigenvalues are wanted.
+
+	The Davidson approach sacrifices the attractive Krylov subspace structure, at cost of having to compute eigenpairs and associated residual vectors of a projection matrix at each outer iteration. The advantage, however, is that Davidson approach can augment the subspace by a new vector potentially much better than one based on strict Krylov subspace structure. The augmentation vector added to subspace at each step comes from solution of the correction-equation $diag(A) - \mu I)t = -r$, where $r=Ax-\mu x$ is the residual vector corresponding to a Ritz pair $(\mu, x)$ and $t$ is the augmentation vector to be computed. 
+
+	This paper, however, presents an alternate approach by using Chebyshev polynomial based intervalwise filtering instead of solving correction equations.
+
+	\section{Rayleigh-Ritz Method}
+	The Rayleigh-Ritz Method \cite{trefethen1997numerical} is a method commonly applied to approximate the eigen-pairts of a matrix by projecting it onto a smaller dimention matrix. 
+
+	To approximate the eigenproblem $Ax = \lambda x$, where $A \in \mathbb{C}^{N\times N}$, solve the eigenproblem $V^{*}AVy_i = \mu_i y_i$ where $V \in \mathbb{C}^{N\times m}, m<N$ is an orgthonormal vatrix. $\mu_i$ and $Vy_i$ are then the approximations to the eigenpair of $A$ provided the subspace with basis given by columns of $v$ contains at correponding eigenvector.
+
+	\section{Advantages of polynomial filtering}
+	This section discusses three observations. 
+	
+	The first observation is polynomial filtering argument: For a symmetric matrix $A$ with the eigendecomposition $A=Q\Lambda Q^T$, any polynomial $\psi(s): \mathbb{R} \rightarrow \mathbb{R}$ satisfies $\psi(A)v = Q\psi(A)Q^Tv, \forall v \in \mathbb{R}^n$. 
+
+	The second observation is on the fast local convergence of Jacobi-Davidson is because it retains the approximate direction of RQI in the basis of projection subspace. Assuming $(\mu, x)$ being the Ritz pair that best approximation of the wanted eigenvalue, and $x$ of unit length, $t$ can be obtained by simplified problem $(I-xx^T)(A-\mu I)t = r$ where the original method required $x \perp t,(I-xx^T)(A-\mu I)(I-xx^T)t = r$. Thus dropping the orthogonality constraint and removing the right projection matrix would still maintain the approximation. The left projection matrix is crucial in maitaining the RQI direction in the direction of JD.
+	
+	The third observation is that one can improve the global convergence by chooseing the polynomial $\psi(s)$ which magnifies directions corresponding to an interval containing the wanted eigenvalues and simultaneously, dampens the unwanted eigenvalues. This minimizes the chance that the wanted eigen value will be missed. Davidson type methods may miss the wanted eigenvalues because the correction equation resember shift inverse formulations and chosen shift greately affects the eigen value computed. Thus Chebyshev filtering is a more robust alternative. 
+
+	\section{Chebyshev polynomial filtering}
+	The observations in the previous section suggest that polynomials which significantly magnify the lowest end of a wanted interval and dampens unwanted intervals at the same time can be used as a filter to improve global convergence. This method integrates Chebyshev polynomial filtering into the varying dimension Davidson type algorithm, reducint eh required subspace much smaller than Lanczos-type method. 
+
+	The Chebyshev polynomials of the first kind are given by 
+	$$ C_{k}(t)= \begin{cases}
+		\cos(k \cos^{-1}(t)), &-1\le t \le 1 \\
+		\cosh(k \cosh^{-1}(t)), & \abs{t} > 1
+	\end{cases} $$
+	$$
+		C_{0}(t)=1, c_{1}(t)=t, C_{k+1}(t)=2tC_{k}(t) - C_{k-1}(t), t \in \mathbb{R}
+	$$
+
+	The filtering is based on the property of the Chebyshev polynomial that its magnitude grows rapidly outside the interval [-1,1]. Suppose that the spectrum of $A$ is contained in $[a_0,b]$ and we want to dampen the interval $[a,b]$ for $a > a_0$, then we need to simply map $[a,b]$ into [-1,1] by an affine mapping (e.g. scaling, rotation etc.), thus the eigenvalues closer to $a_0$ will be mapped away from [-1,1] and hence, magnified while the eigenvalues in $[a,b]$ will be dampned. This is the desired filtering. 
+	The Chebyshev iteration  described above is presented in the algorithm \ref{chebyshevIteration} below
+
+	\IncMargin{2em}
+	\begin{algorithm}
+		\caption{Chebyshev filter}
+		\label{chebyshevIteration}
+		Need to add algorithm
+	\end{algorithm}
+
+	An iteration of the algorithm is equivalent to computing $$ y=p_m(A)x, \hspace{20pt}\text{where  }P_m(t)=C_m\biggl(\frac{t-c}e{}\biggr) $$
+	The $\sigma$'s are used for scaling. The three-term recurrence using $p_m(A)$ yields $$ x_{j+1} = \frac{2}{e}(A-cI)x_j - x_{j-1}, j=1,2,\dots,m-1, \hspace{20pt} \text{given an }  x_0 \text{ and } x_1 = (A-cI)x_0 $$
+	This is equivalent to a power iteration of the form$$\begin{pmatrix}x_{j+1}\\ x_j\end{pmatrix} =\underbrace{\begin{pmatrix}\frac{2}{e}(A-cI) & -I \\ I & 0\end{pmatrix}}_\mathcal{B} \begin{pmatrix}x_j \\x_{j-1}\end{pmatrix}$$
+
+	The eigenvalues of the non-symmetric matrix $\mathcal{B}$ are complex and of modulus $1$, except those corresponding to eigen values of $A$ that are less than $a$ which are real and magnitude larger than 1. Thus a scaling step is recommended with $\bar{x}_j = \frac{C_j[\frac{2}{e}(A-cI)]}{C_j[\frac{2}{e}(a_0-cI)]}x_0$, where $C_j[\frac{2}{e}(a_0-cI)$ is the scaling factor. Since this is only used for scaling, a rough estimate of $a_0$ is sufficient. We can start by choosing a value smaller than $a$. Subsequent steps can choose the smallest Ritz value. 
+
+	\section{Chebyshev polynomial accelerated Davidson method}
+	The pseudocode for the CHebyshev-Davidson method is presented in the algorithem \ref{ChebyshevDavidson} below. 
+
+	Some points worth noting the natural indexing scheme employed by the algorithm offers the following advanages. The deflation of the converged eigenvectors is handled by indexing ht ecolumns of the projection basis $V$. No extra storage for the convered eigenvectors in necessary and the restarting is simplified by indexing. 
+
+	Some other comments that the authors make are: It is critical that the upperbound estimate used in teh algorithm truly bounds the eigenvalues of $A$ from above, otherwise the larger eigenvalues will be magnified, leading to wrong convergence. The choice of lower bound is also very important but there is some flexibility. 
+
+	\IncMargin{2em}
+	\begin{algorithm}
+		\caption{Chebyshev-Davidson method}
+		\label{ChebyshevDavidson}
+		Need to add algorithm
+	\end{algorithm}
+
+	\section{Analysis}
+	The analysis section applies several simplifications in order to understand the convergence of the algorithm. 
+	Assume that $\lambda_1 < \lambda_2 \le \dots \le \lambda_n$ are eigen values of $A$ with corresponding eigenvectors being $q_1, q_2,\dots, q_n$. The algorithm adaptively changes the interval to be dampened in each iteration and the matrix applied in step $j$ is $$p_m^{(j)}(A)=C_m^{(j)}((A=c_j I)/e_j)$$ 
+
+	The first simplification is to keep the the interval to dampen fixed, i.e. the matrix to be used in each step is the same, so the index $j$ in the above equation can be done away with. Next, asuume that no restart is used.
+
+	Further simplification is achieved by reducing the dimentionality of the algoritm to one. Thus, algorithm now becomes a standard power method with matrix $p_m(A)$. Now, one can easily see that the convergence is now dependent upon the ratio of the two largest eigenvalues. Now setting the interval to be danpened as $[a,b]$ where $\lambda_1 < a$, we know that the dominant eigen value of the matrix is $C_m((\lambda_1 -c)/e)$ and algorithm would converge to the first eigenvector $q1$ with convergence factor $$ \rho = \frac{max_{j>1}\lvert C_m((\lambda_j - c)/e)\rvert }{C_m((\lambda_1 -c)/e)} < 1$$
+
+	Now, if we increase the dimension to two, the simplified method has a Krylov interpretation. Assume that the first basis vector fo the subspace is $p_m(A)x$. The second vector then would be $p_m(A)x_1$ where $x_1$ is the approximate (Ritz) eigenvector obtained by projecting $A$ onto the one-dimentaional space spanned by the first vector and hence is a multiple of $p_m(A)x$. Thus $K_2 = span\{p_m(A)x, p_m(A)x_1\}=span\{p_m(A)x, p_m^2(A)x\}$.
+
+	Taking it a step further, the third step of the algorithm will inject a vector of the form $p_m(A)x_2$ where $x_2$ is the Ritz eigenvector computed by porjecting $A$ onto the subspace $k_2$. Hence $x_2$ must be linear combination of the vectors of $k_2$. Hence we can write $x_2 = \alpha_1 P_m(A)x + \alpha_2 p_m^2(A)x$. Thus the 3\textsuperscript{rd} vector of the subspace would be of the form $\alpha_1 p_m^2(A)x + \alpha_2 p_m^3(A)x$ and the basis of the subspace $K_3$ can be written as $K_3 \equiv span\{p_m(A)x, p_m^2(A)x, p_m^3(A)x\}$. This can be extended to an arbitrary step $j$. 
+
+	\subsection{Chebyshev-Davidson method is not a Krylov subspace method}
+	Proposition 5.1 in the paper \cite{chebydav07} states that assuming the simplifications stated above, i.e fixed filtering interval and no restart, the Chebyshev-Davidson method is mathematically equivalent to a Rayleign-Ritz process applied to $A$ using the Krylov subspace $K_j(p_m(A)x)$. Thus if one generated the orthogonal basis $V_j$ of the Krylov subspace $K_j$ and computed the eigenvalues of $V_j^T A v_j$, these eigenvalues will be identical with those of the simplified algorithm above. However, This is NOT a Krylov subspace method because the projection uses $A$ and not $p_m(A)$. Noteworthy, here, is that the eigenvecors of $A$ are teh eigenvectors of $p_m(A)$.
+
+	Next, if we bring to light, the fact that the Chebyshev-Davidson algorithm adapts the filters by adjusting the bounds of the interval to be danpened at each iteration. Thus $K_2 = span\{p_m^{(1)}(A)x, p_m^{(2)}p_m^{(1)}(A)x\}$ and 
+	$$ K_3 = span\{p_m^{(1)}(A)x, p_m^{(2)}p_m^{(1)}(A)x, \alpha_1p_m^{(3)}p_m^{(1)}(A)x + \alpha_2p_m^{(3)}(A)xp_m^{(2)}(A)xp_m^{(1)}(A)x \} $$
+
+	Infact the last term of the Krylov subspace $J_j$ contains $\Phi_j(t) = \Pi_i=1^k p_m^(j)(t)$ with a non-zero coefficient. 
+
+	\thispagestyle{fancy}
+	\bibliographystyle{unsrt}
+	\bibliography{long_string, Mybib} 
+
+	\nocite{}
+
+\end{document}
