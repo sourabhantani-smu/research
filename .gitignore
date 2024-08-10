@@ -8,3 +8,12 @@ Reports/tex/*.synctex.gz
 Reports/tex/Report-A Chebyshev-Davidson Algorithm For Large Symmetric Eigenproblems.bcf
 SampleCode/*
 Reports/tex/Report-A Chebyshev-Davidson Algorithm For Large Symmetric Eigenproblems.run.xml
+.virtual_documents
+.ipynb_checkpoints
+.vscode
+__pycache__
+Code/.ipynb_checkpoints
+Code/ChebDav/.ipynb_checkpoints
+Code/ChebDav/__pycache__
+Code/ChebyshevDavidson/.ipynb_checkpoints
+Code/ChebyshevDavidson/__pycache__
