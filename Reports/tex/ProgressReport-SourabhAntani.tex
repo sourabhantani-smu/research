@@ -1,0 +1,216 @@
+\documentclass[10pt,a4paper, nocenter]{article}
+\usepackage[scaled=0.92]{helvet}
+\usepackage[margin=1in]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage{blindtext}
+\usepackage{amsmath}
+\usepackage{appendix}
+\usepackage{amsfonts}
+\usepackage{amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{enumerate,url}
+\usepackage{etoolbox}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{hyperref}
+
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+\makeatletter
+\patchcmd{\chapter}{\@maketitle\cleardoublepage}{}{}{}
+\makeatother
+
+\newtheorem{prop}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newcommand{\abs}[1]{\lvert {#1} \rvert}
+\newcommand{\norm}[1]{\lvert\lvert {#1} \rvert\rvert}
+
+
+
+\pagestyle{fancy}
+\lhead{Progress Report - Spectral Clustering}
+\rhead{Sourabh Antani}
+\cfoot{\thepage\ of \pageref{LastPage}}
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+
+\author{Sourabh Antani}
+\title{Research Report - Spectral Clustering}
+\date{}
+
+\begin{document}
+	\maketitle
+	
+	\section{Introduction}
+    \thispagestyle{fancy}
+    Clustering is a cornerstone of exploratory data analysis. Today, clustering is applied in a wide range of fields ranging from population analysis, consumer segmentation, to detection and molecular profiling of diseases. Spectral clustering is especially useful when the structure of the individual clusters is non-convex or when the 'shape' of the data is not suitable to be described by a measure of center and spread of clusters in euclidean space. However, spectral clustering also faces a few practical challenges since it requires computation of eigenvectors and application of k-means. In this paper, we examine some of the proposed ways of alleviating these challenges and explore the application of a Chebyshev-Davidson method, to calculate the required smallest eigenvalues and corresponding eigenvectors without the need for full eigen-decomposition, as a means to accelerate spectral clustering.
+
+    \section{The main framework of spectral clustering}
+    The main structure of a spectral clustering algorithm includes three parts:
+    \begin{enumerate}
+   		\item From the affinity matrix and the Laplacian matrix.
+    	\item Compute the outer eigenvalues and their associated eigenvectors of the Laplacian.
+    	\item Apply k-means to the normalized rows of the eigenvectors for clustering.
+    \end{enumerate}
+    
+	 Assuming the goal is to cluster $n$ data points $S=\{s_1,\dots,s_n\} \subset \mathbb{R}^L, n\ge L$ into $k$ clusters. A more detailed spectral clustering algorithm is presented in Algorithm \ref{alg:spectralClust}, it summarizes the three spectral clustering algorithms surveyed in \cite{Luxburg2007}. A slight difference from \cite{Luxburg2007} is that the normalization of the rows of eigenvectors as proposed in \cite{ng-jordan-01} are applied to all three Laplacians.
+    
+    
+    \begin{algorithm}
+    	\label{alg:spectralClust}
+		\caption{Spectral Clustering Algorithm}
+		\begin{algorithmic}[1]
+		  	\State Form the affinity matrix $A\in \mathbb{R}^{n\times n}$, one common way is to set $A_{ij} = e^{-\norm{s_i - s_j}^2} / \mu^2$ for a chosen $\mu \ne 0$, and $A_{ii} = 0$
+		  	\State Compute a Laplacian matrix from $A$, such as the random walk Laplacian $I-D^{-1}A$, or the symmetric Laplacian $I-D^{-1/2}AD^{-1/2}$, or simply $D-A$. Here $D$ is the diagonal degree matrix, its $i$-th diagonal is the sum of degrees at vertex $i: d_i = \sum_{j=1}^{n} A_{ij}$.
+		  	\State Compute the largest $k$ eigenvalues and their associated eigenvectors of the chosen Laplacian.
+		  	\State Normalize the $n$ rows of the eigenvector matrix to unit length, treat the $n$ rows as $n$ points on the unit hyper-sphere in $\mathbb{R}^k$, apply k-means to cluster these points into $k$ clusters. 
+		  	\State Assign the same grouping of the rows of the eigenvectors to the original data. i.e., $s_i$ is assigned to cluster $j$ if and only if row-$i$ of the eigenvector matrix is assigned so.
+		\end{algorithmic}
+    \end{algorithm}
+
+	In \cite{ng-jordan-01}, the scaled affinity matrix $D^{-1/2}AD{-1/2}$ is used. thus the smallest $k$ eigenvalues and their associated eigenvectors are computed for clustering. 
+	
+	There exists rather extensive literature that tries to extend the power of spectral clustering to larger data. They can be grouped into two categories: 1. Building the affinity matrix utilizing some KNN techniques; 2. Computing the eigenvectors only approximately, either by filtering or utilizing some localized techniques.
+	\texttt{}
+	We focus on the second category. Our method can utilize any advancements that have been made for the first category. 
+	
+	\section{Existing acceleration schemes}
+	For large dataset, the adjacency matrix as well as the Laplacians are of high dimension. Computing the eigenvectors using standard eigen-algorithm would suffer the $O(n^3)$ complexity. Hence, methods of lower than cubic-order complexity are needed.
+    
+    Fowlkes \textit{et al.} \cite{Fowlkes-2004} proposed the Nystr\"om method to accelerate the computation of eigenvectors.
+    
+    Tremblay \textit{et al.} \cite{tremblay-compressive-SC-16} proposed applying polynomials that approximate a low-pass step function to filter out unwanted spectrum of the adjacency matrix. Note that the lower part of the spectrum of the adjacency matrix would translate to the higher part of the spectrum of a Laplacian. 
+    
+    Wu \textit{et al.} \cite{wu_random_binning} proposed used of random binning to reduce the computational coast and memory footprint by selecting a representative element from each bin for clustering and finally extrapolating the cluster assignment to the full dataset.
+    
+    \section{Proposed acceleration scheme}
+    As shown in Proposition 1 and Proposition 3 of \cite{Luxburg2007}, the Laplacian associated with the spectral clustering problem is a positive semi-definite symmetric matrix with real-valued eigenvalues. This means that we can employ a method that takes advantage of this structure to compute the eigenpairs of the Laplacian. However, most eigenvalue computation algorithms compute the largest eigenvalues first. This means that full eigendecomposition will be needed to compute the smallest $k$ eigenvalues of the Laplacian. Chebyshev filtering can be applied as described below to directly compute only the required smallest eigenpairs directly. 
+    
+    Chebyshev polynomials of the first kind are defined as (see \cite{saad1992numerical}, Chapter 4, section 4.4) $$C_k(t) = \begin{cases} \cos(k \cos^{-1}(t)), &-1\le t \le 1, \\ \cosh(k \cosh^{-1}(t)), &\abs{t} > 1. \end{cases}$$ Note that $C_0(t)=1, C_1(t)=t$ and the three-term recurrence, $C_{k+1}(t)=2tC_k(t) - C_{k-1}(t), k>1, t\in \mathbb{R}$. Thus, $C_k(t)$ is a polynomial of $t$ with degree $k$. A noteworthy property of Chebyshev polynomial is that its value $C_{m}(t)$ oscillates between -1 and 1 for $t \in [-1,1]$ and its value increases in magnitude very rapidly outside $[-1,1]$ as illustrated in Figure \ref{fig:chebyshevPlot}. 
+    
+    
+    \begin{figure}[h]
+    	\includegraphics[width=\textwidth]{ChebyshevPlot.png}
+    	\caption{Behavior of Chebyshev polynomial of degree m within and outside [-1,1]}
+    	\label{fig:chebyshevPlot}
+    \end{figure}
+    
+    Given a Matrix $A$, let $(\lambda, x)$ be one of its eigenpairs, i.e. $Ax = \lambda x$. If $p_m(x)$ is a polynomial of degree $m$, $p_m(A)x=p_m(\lambda)x$ since $\alpha Ax = \alpha\lambda x$ and $A^{\beta}x = \lambda^\beta x,$ for  $\alpha,\beta \in \mathbb{R}$. 
+    
+    Let $\lambda_0 \le \lambda_1 \le \cdots \le \lambda_k < \lambda_{k+1} \le \cdots \le \lambda_n$ be the eigenvalues of the matrix $A$. Since we need to find the smallest $k$ eigenvalues, we would need to magnify the eigenvalues in $[\lambda_0, \lambda_k]$ and dampen the eigenvalues $ \ge \lambda_{k+1}$. This can be achieved by mapping the interval $[a,b]$, such that $\lambda_k < a \le \lambda_{k+1}$ and $\lambda_n \le b$, to $[-1,1]$ by an affine mapping $x \to \frac{(x-c)}{e}$ where  $c = \frac{a+b}{2}$ is the center of interval and $e=\frac{b-a}{2}$ is its half width. Thus, \begin{align*}
+    	y&=p_m(A)x, \hspace{10pt}\text{where }p_m(t)=C_m\bigg(\frac{t-c}{e}\bigg) \\
+    	x_{j+1}&=\frac{2}{e}\big(A - cI\big)x_j - x_{j-1}, \hspace{10pt}j=1,2,\dots,m-1.
+    	\end{align*}
+    
+    It is crucial that the upper-bound $b$ bounds the eigen values from above. Otherwise the filtering will magify the largest eigenvalues as well, defeating the purpose. The upper bound of the interval $b$ can be computed using Gershgorin circle theorem which states that each eigenvalue must lie in a disc with radius $R_i$ where, \begin{align*}
+    	R_i = \lvert \lambda - a_{ii} \rvert &\le \sum_{j\ne i}\lvert a_{ij} \rvert \\
+    	\lvert \lambda \rvert - \lvert a_{ii} \rvert &\le \lvert \lambda - a_{ii} \rvert \le \sum_{j\ne i}\lvert a_{ij} \rvert \\
+    	\implies \lvert \lambda \rvert &\le \sum_{j}\lvert a_{ij} \rvert \\
+    	\implies \lvert \lambda_n \rvert &\le \max \sum_{j}\lvert a_{ij} \rvert
+    \end{align*} 
+    
+    Since the Laplacian is a positive semi-definite symmetric matrix with positive real-valued eigenvalues, $\lambda_n \le \norm{A}_{1}$. Alternately $k$-step Lanczos method described in Algorithm 4.4 of \cite{ZHOU2006172} can also be used. The lower-bound can be any value greater than $\lambda_k$. In the algorithm \ref{alg:chebyshev_davidson}, $a$ is initialized as Rayleigh quotient with a random unit vector and subsequently approximated as Ritz value from previous step.
+    
+	Here we present a brief overview of the method and refer to \cite{chebydav07} for a detailed discussion of this method.  
+    \begin{algorithm}
+    	\label{alg:chebyshev_filter}
+    	\caption{Chebyshev polynomial filtering of degree $m$}
+    	\begin{algorithmic}[1]
+    		\Function{Chebyshev\_filter}{$A, x, m, a, b, a_0$}
+    		\State $e=(b-a)/2; c=(b+1)/2; \sigma = e/(a_0 -c); \sigma_1 = \sigma$
+    		\State $y=(Ax-cx)\sigma_1/e$
+    		\For{$i=2:m$}
+    			\State$\sigma_{new} = \frac{1}{(a/\sigma_1-\sigma)}$
+    			\State$y_{new} = 2(Ay-cy)\sigma_{new}/e - \sigma \sigma_{new}x$
+    			\State$x=y; y=y_{new}; \sigma = \sigma_{new}$
+    		\EndFor
+
+    		\State \Return{$y$}
+    		\EndFunction
+    	\end{algorithmic}
+    \end{algorithm}
+
+    \begin{algorithm}
+	\label{alg:chebyshev_davidson}
+	\caption{Chebyshev-Davidson method for computing $k_{want}$ smallest eigenpairs}
+	\begin{algorithmic}[1]
+		\State Input: $x$ - initial unit vector, can be initialized as a random vector; $m$-degree of polynomial; $k_{keep}$-number of vectors to keep during restart; $dim_{max}$-maximum subspace dimension; $\tau$ - tolerance
+		\State Output: $k_c$ converged smallest eigenpairs: $eval[1:k_c], V[1:k_c]$. 
+		\State Initialize $V = [x]$
+		\State $w = Ax$, $W=[w]$, $\mu = x^Tw$,  $H=[\mu]$
+		\State residual vector: $r = w-\mu x$
+		\If{$\norm{r} \le \tau$}
+			\State $eval[1] = \mu$, $k_c = 1$, $H=[]$ 
+		\Else 
+			\State $k_c=0$
+		\EndIf
+		\State Estimate the upper-bound $upperb$ using minimum of $k$-step Lanczos and $\norm{A}_1$
+		\State Set lower-bound $lowerb = (uppeprb+\mu)/2$, $a_0=lowerb$
+		\State Current subspace dimension $k_sub = 1$
+		\While{$iter \le iter_{max}$}
+		\State $[t] = CHEBYSHEV\_FILTER(A,x,m,lowerb, upperb, a_0)$
+		\State Orthonormalize $t$ against first $k_{sub}$ columns of $V$ to get $v$ and append to $V$. $k_{sub} = k_{sub}+1; k_{old} = k_{sub}$
+		\State $w=Av$. Append $w$ to $W$
+		\State Compute last column of symmetric Rayleigh-Quotient Matrix $H[1:k_{sub}-k_c,k_{sub}-k_c] = V[:,k_c+1:k_{sub}]^Tw$
+		\State Compute eigendecomposition of $HY = YD$ with $diag(D)$ sorted in non-increasing order. $\mu = D[1,1]$
+		\If{$k_{sub} \ge dim_{max}$} 
+		\State restart: $k_{sub} = k_c+k_{keep}$
+		\EndIf
+		\State  $V[:,k_c+1:k_{sub}] = V[:k_c+1:k_{old}]Y[:,1:k_{sub}-k_c]$; $W[:,k_c+1:k_{sub}] = W[:k_c+1:k_{old}]Y[:,1:k_{sub}-k_c]$;
+		\State residual vector: $r = W[:,k_c+1] - \mu V[:,k_c+1]$
+		\State $iter = iter + 1$
+		\If{$\norm{r} \le \tau max(diag(D))$}
+		\State $k_c = k_c+1; eval(kc) = \mu$
+		\State sort converged eigenvalues in non-increasing and set $swap=0$ if swap happens.
+		\EndIf
+		\If{$k_c \ge k_{want}$ and no swap was needed}
+		\State \Return $eval[1:k_c]$ and $V{:,1:k_c}$
+		\EndIf
+		\State update bounds for next iteration $lowerb = median(diag(D))$; 
+		\If{$a_0 > min(diag(D))$}
+		\State $a_0 = min(diag(D)) $
+		\EndIf
+		\State Ritz-vector for next iteration: $x = V[:,k_c+1]$
+		\State $H = D[k_c+1:k_{sub}, k_c+1:k_{sub}]$
+		\EndWhile
+		\State \Return{$y$}
+	\end{algorithmic}
+	\end{algorithm}
+	
+	For numerical stability, DGKS method is used for orthogonalization. The deflation of the eigenvectors is achived by indexing the columns of the projection basis $V$.
+	
+    
+    
+    \section{Experiments}
+	To test our python implementation of the Chebyshev-Davidson method, we generated two toy-datasets using scikit python learn library and used normalized spectral clustering  by replacing the standard numpy eigenvalue function call with our Chebyshev-Davidson function call. As shown in Figure \ref{fig:toyExamples} the two clusters were identified appropriately. 
+		
+    \begin{figure}[h]
+		\includegraphics[width=\textwidth]{toyexmples.png}
+		\caption{Spectral clustering of moons and concentric circles}
+		\label{fig:toyExamples}
+	\end{figure}
+	
+	Next we used the Spectral clustering algorithm on two graphs generated using Networkx package \cite{networkx}, Gaussian random partition graph \cite{networkx_gaussian} and LFR Benchmark Graph \cite{networkx_lfr}. 
+    \begin{figure}[h]
+		\includegraphics[width=\textwidth]{networkx.png}
+		\caption{Spectral clustering of Gaussian random partition graph and LFR Benchmark community detection graphs}
+		\label{fig:toyExamples}
+	\end{figure}
+    
+    \section{Results}
+    
+    
+    \section{Concluding Remarks}
+    
+	\thispagestyle{fancy}
+	\bibliographystyle{unsrt}
+	\bibliography{long_string, Mybib} 
+	
+\end{document}
