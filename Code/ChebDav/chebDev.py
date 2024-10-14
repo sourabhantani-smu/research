@@ -3,21 +3,24 @@ from numpy import linalg as la
 
 
 verbose = 0
-def chebyshev_filter(x, m, a, b, a0, A):
+
+def chebyshev_filter(x, m, a, b, a0, A, matvec, matmat, vecvec):
     e = (b-a)/2
     c = (b+a)/2
     s = e/(a0-c)
     s1=s
     y = (np.dot(A,x) - c*x)*(s1/e)
+    matvec += 1
     for i in range(1,m):
         s_new = 1/((2/s1)-s)
         y_new = (np.dot(A,y) - c*y)*(2*s_new/e)-((s*s_new)*x)
+        matvec += 1
         x=y
         y=y_new
         s=s_new
-    return y
+    return y, matvec, matmat, vecvec
 
-def swapIfNeeded(eigVal, eigVec):
+def swapIfNeeded(eigVal, eigVec, matvec, matmat, vecvec):
     mu = eigVal[-1]
     i = eigVal.shape[0]-1
     maxI = i
@@ -27,9 +30,9 @@ def swapIfNeeded(eigVal, eigVec):
     eigVecSortedIndex = sortedIndex
     if eigVec.shape[0]>eigVal.shape[0]:
         eigVecSortedIndex = np.append(sortedIndex,np.array(range(len(eigVal), eigVec.shape[1])))
-    return eigVal[sortedIndex], eigVec[:,eigVecSortedIndex], i!=maxI
+    return eigVal[sortedIndex], eigVec[:,eigVecSortedIndex], i!=maxI, matvec, matmat, vecvec
 
-def orthonormalizeDGKS(v, M):
+def orthonormalizeDGKS(v, M, matvec, matmat, vecvec):
     vnorm = la.norm(v)
     v = v/vnorm
     vnew_norm = None
@@ -38,9 +41,11 @@ def orthonormalizeDGKS(v, M):
     dgksiter = 0
     tmpnorm = eta*vnorm
     while vnew_norm is None or vnew_norm < tmpnorm:
-        v_tmp = M.transpose().dot(v) 
+        v_tmp = M.transpose().dot(v)
+        matvec += 1
         tmpnorm = la.norm(v_tmp)
         v_new = v - M.dot(v_tmp)
+        matvec += 1
         vnew_norm = la.norm(v_new)
         v_new = v_new/vnew_norm
         dgksiter += 1
@@ -53,10 +58,10 @@ def orthonormalizeDGKS(v, M):
                 raise Exception("DGKS could not orthornormalize after 3 iterations and 3 random vectors")
         else:
             v = v_new
-    return v_new
+    return v_new, matvec, matmat, vecvec
 
 
-def lanczos_upperb(A, k=4):
+def lanczos_upperb(A, k, matvec, matmat, vecvec):
     dim = A.shape[0]
     if k == -1:
         k=dim
@@ -66,7 +71,9 @@ def lanczos_upperb(A, k=4):
     v = np.matrix(np.random.randn(A.shape[0])).transpose()
     v = v/la.norm(v)
     w_prime = A.dot(v)
+    matvec += 1
     a = v.transpose().dot(w_prime)[0,0]
+    vecvec += 1
     w_new = w_prime - a*v
     v_arr.append(v)
     T[0,0]=a
@@ -79,6 +86,7 @@ def lanczos_upperb(A, k=4):
             v_arr = generate_linearly_independent_unit_vector(v_arr)
             v_new = np.matrix(v_arr[-1]).transpose()
         w_prime = A.dot(v_new)
+        matvec += 1
         a = v_new.transpose().dot(w_prime)[0,0]
         w_new = w_prime - a*v_new - b*v
         v=v_new
@@ -87,18 +95,22 @@ def lanczos_upperb(A, k=4):
         T[i,i-1] = b
     max_eig = max(la.eig(T[:i+1, :i+1])[0])
     if b < 0.01:
-        return max_eig+b*10
+        return max_eig+b*10, matvec, matmat, vecvec
     elif b < 0.1:
-        return max_eig+b*5
+        return max_eig+b*5, matvec, matmat, vecvec
     else:
-        return max_eig+b
+        return max_eig+b, matvec, matmat, vecvec
     
     
-def getUpperBound(A):
+def getUpperBound(A, matvec, matmat, vecvec):
     nrm_1 = la.norm(A,1)
-    return min(nrm_1, lanczos_upperb(A))
+    l_upperb, matvec, matmat, vecvec = lanczos_upperb(A, 4, matvec, matmat, vecvec)
+    return min(nrm_1, l_upperb), matvec, matmat, vecvec
     
 def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIter = 1e3):
+    matvec = 0
+    matmat = 0
+    vecvec = 0
     if x is None:
         x = np.matrix(np.random.randn(A.shape[0])).transpose()
     if kkeep is None:
@@ -110,8 +122,10 @@ def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIt
     x = x/la.norm(x)
     V = np.matrix(x)
     w = A.dot(x)
+    matvec += 1
     W = np.matrix(w)
     mu = x.transpose().dot(w)[0,0]
+    vecvec += 1
     H = np.matrix(mu)
     
     r = w - mu*x
@@ -121,7 +135,7 @@ def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIt
         H = np.empty((0,0))
     else:
         kc=0
-    upperb = getUpperBound(A)
+    upperb, matvec, matmat, vecvec = getUpperBound(A, matvec, matmat, vecvec)
     lowerb = (upperb + mu)/2
     a0 = lowerb
     ksub = 0
@@ -130,12 +144,13 @@ def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIt
         if verbose > 1:
             print('Upperbound', upperb)
             print('Lowerbound', lowerb)
-        t = chebyshev_filter(x,m,lowerb, upperb, a0, A)
-        v_knext = orthonormalizeDGKS(t,V[:,0:ksub+1])
+        t, matvec, matmat, vecvec = chebyshev_filter(x,m,lowerb, upperb, a0, A, matvec, matmat, vecvec)
+        v_knext, matvec, matmat, vecvec = orthonormalizeDGKS(t,V[:,0:ksub+1], matvec, matmat, vecvec)
         V = np.column_stack([V, v_knext])
         kold = ksub
         ksub += 1
         w_knext = A.dot(v_knext)
+        matvec += 1
         W = np.column_stack([W,w_knext])
         if verbose > 1:
             print('V', V.shape,'W', W.shape,'H', H.shape)
@@ -144,8 +159,10 @@ def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIt
         H=np.row_stack([H,np.zeros(kold+1)])
         if kc>0:
             H=np.column_stack([H,np.row_stack([np.zeros((kc,1)), V[:,kc:ksub+1].transpose().dot(w_knext)])])
+            matvec += 1
         else:
             H=np.column_stack([H,V[:,kc:ksub+1].transpose().dot(w_knext)])
+            matvec += 1
         for i in range(H.shape[0]-1):
             H[-1,i]=H[i,-1]
         D,Y = la.eigh(H[kc:ksub+1, kc:ksub+1])
@@ -164,10 +181,11 @@ def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIt
         if kc > 0:
             V = np.column_stack([V[:,:kc], V[:,kc:kold+2].dot(Y[:,:ksub-kc+1])])
             W = np.column_stack([W[:,:kc], W[:,kc:kold+2].dot(Y[:,:ksub-kc+1])])
+            matmat += 2
         else:
             V = np.column_stack([V[:,:kc], V[:,kc:kold+2].dot(Y[:,:ksub-kc+1])])
             W = np.column_stack([W[:,:kc], W[:,kc:kold+2].dot(Y[:,:ksub-kc+1])])
-
+            matmat += 2
         if kc>0:
             H = np.column_stack([np.row_stack([H[:kc,:kc],np.zeros((ksub+1-kc,kc))]),np.row_stack([np.zeros((kc,ksub+1-kc)),np.diag(D[:ksub-kc+1])])])
         else:
@@ -189,10 +207,10 @@ def cheb_dav(A, kwant, x = None, m=10, kkeep=None, maxdim=None, tol=1e-10, maxIt
                 ## SWAP TEST and set swap=True if swap happens
                 swap = False
                 if kc > 1:
-                    eigs, V, swap = swapIfNeeded(eigs, V)
+                    eigs, V, swap, matmat, vecvec, matvec = swapIfNeeded(eigs, V, matmat, vecvec, matvec)
                     
                 if kc >= kwant and not swap:
-                    return eigs, V[:,:kc+1]
+                    return eigs, V[:,:kc+1], matmat, vecvec, matvec
                 mu = D[conv_i+1]
                 if kc < V.shape[1]:
                     r = W[:,kc]-mu*V[:,kc]
