@@ -201,11 +201,42 @@
     \begin{figure}[h]
 		\includegraphics[width=\textwidth]{networkx.png}
 		\caption{Spectral clustering of Gaussian random partition graph and LFR Benchmark community detection graphs}
-		\label{fig:toyExamples}
+		\label{fig:networkxExamples}
 	\end{figure}
     
     \section{Results}
+    Our goal for this experiment was to improve the efficiency of spectral clustering process without sacrificing the clustring quality. The use of Chebyshev-Davidson method offers a two-fold advantage, we only need to compute the required set of eigen-vectors there by eliminating computation of full set of eigen-vectors, and by increasing the eigen-gap between the eigenvalues of interest to speed up the convergence. We chose the following metrics to compare the clusters detected with Chebyshev-Davidson method with the clusters detected using default algorithm employed by numpy.linalg package in python 3.12.3. 
     
+    \textbf{F1-Score:}: F1-score is a measure of predictive performance. When the true labels (or clusters) are known, precision is defined as the ratio of samples correctly assigned to a label to the total number of samples assigned to the label. Also, recall is defined as ration of samples correctly assigned to a label to the total number of samples that actually belong to the label. Finally, F1-score is defined as the harmonic mean of precision and recall. In case of binary classification, where the labels can be Positive and Negative, the following formula shows computation of F1-score. In our case, we use the clusters identified by default numpy implementation as 'truth' to how well our results match. The range of F1-score is $[0,1]$ where $1$ would indicate perfect match.
+    
+    $$F_{1} = \frac{2}{recall^{-1}+precision^{-1}} = \frac{2TP}{2TP+FP+FN}$$
+    
+    \textbf{Normalized Mutual Information (NMI):} NMI is a metric that yields a value from 0 to 1 and indicates the similarity between two clusters. The following formula shows the computation
+    
+    $$NMI\left(A,B\right)=\frac{-2\sum_{i=1}^{S}\sum_{j=1}^{R}{C}_{ij}{\text{log}}\frac{{C}_{ij}N}{{C}_{i.}{C}_{.j}}}{\sum_{i=1}^{S}{C}_{i.}{\text{log}}\frac{{C}_{i.}}{N}+\sum_{j=1}^{R}{C}_{.j}{\text{log}}\frac{{C}_{.j}}{N}}$$
+    
+    where $C_i$ and $C_J$ are the number of samples in clusters $i$ and $j$ from two clustering outcomes, while $C_{ij}$ is the number of samples that are common between those clusters.
+    
+    
+    After initial experiments with datasets generated from scikit-learn and networkx libraries, we also tested the performance with some of the datasets from SNAP \cite{snapnets}.
+    
+    The results of our experiments are shown below. All the experiments reported below were performed on shared compute environment. Each experiment was repeated 3 times and median value was taken to reduce the variation due to concurrent processes and process, network and storage load. All the measurements shown are median values of the 3 readings taken. All values less than 10 are rounded to 2 digits after decimal point. [One exception to this was the Astro Physics collaboration network which was only performed once only. I will send an update with multiple runs and also add more datasets]
+    
+	\begin{table}[]
+		\centering
+		\begin{tabular}{|l|l|l|l|l|}
+			\hline
+			Dataset & Cheb-Dav & Default & F1-score & NMI Score \\ \hline
+			NetworkX Gaussian random partitions & 0.27 s & 0.37 s & 1.0 & 1.0 \\ \hline
+			NetworkX LFR benchmark graph & 0.27 s & 0.38 s  & 1.0 & 1.0 \\ \hline
+			SNAP: email-Eu-core network & 2.47 s & 1.98 s & 1.0 & 1.0 \\ \hline
+			SNAP: Astro Physics collaboration network* & 4 m 22 s & 1 hr 5 m 34 s & 0.98 & 0.92 \\ \hline
+		\end{tabular}
+		\caption{Clustering efficiency and similarity to default implementation}
+		\label{tab:results}
+	\end{table}
+
+
     
     \section{Concluding Remarks}
     
